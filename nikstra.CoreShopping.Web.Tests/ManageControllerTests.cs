@@ -23,6 +23,7 @@ namespace nikstra.CoreShopping.Web.Tests
     [TestFixture, SetCulture("en-US")]
     class ManageControllerTests
     {
+        #region Index() method tests
         [Test]
         public async Task GetIndex_SuccessfullyReturnsViewAndModel_WhenUserExists()
         {
@@ -180,7 +181,9 @@ namespace nikstra.CoreShopping.Web.Tests
             var ex = Assert.ThrowsAsync<ApplicationException>(Act);
             Assert.That(ex.Message, Does.StartWith("Unexpected error occurred setting phone number for user with ID"));
         }
+        #endregion
 
+        #region SendVerificationEmail() method tests
         [Test]
         public async Task PostSendVerificationEmail_SuccessfullySendsEmail_WhenUserExists()
         {
@@ -245,6 +248,158 @@ namespace nikstra.CoreShopping.Web.Tests
             var ex = Assert.ThrowsAsync<ApplicationException>(Act);
             Assert.That(ex.Message, Does.StartWith("Unable to load user with ID"));
         }
+        #endregion
+
+        #region ChangePassword() metod tests
+        [Test]
+        public async Task GetChangePassword_RedirectsToSetPassword_WhenUserDoesNotHaveAPassword()
+        {
+            var userManager = CreateUserManagerMock();
+            userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
+                .Returns(Task.FromResult(CreateApplicationUser()));
+
+            userManager.HasPasswordAsync(Arg.Any<ApplicationUser>())
+                .Returns(false);
+
+            var signInManager = CreateSignInManagerMock(userManager);
+            var controller = CreateControllerInstance(signInManager);
+
+            var result = await controller.ChangePassword();
+
+            Assert.That(result, Is.InstanceOf<RedirectToActionResult>());
+            Assert.That((result as RedirectToActionResult).ActionName, Is.EqualTo(nameof(ManageController.SetPassword)));
+        }
+
+        [Test]
+        public async Task GetChangePassword_ReturnsViewAndModel_WhenUserHasAPassword()
+        {
+            var userManager = CreateUserManagerMock();
+            userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
+                .Returns(Task.FromResult(CreateApplicationUser()));
+
+            userManager.HasPasswordAsync(Arg.Any<ApplicationUser>())
+                .Returns(true);
+
+            var signInManager = CreateSignInManagerMock(userManager);
+            var controller = CreateControllerInstance(signInManager);
+            var model = new ChangePasswordViewModel();
+
+            var result = await controller.ChangePassword();
+
+            Assert.That(result, Is.InstanceOf<ViewResult>());
+            Assert.That((result as ViewResult).Model, Is.InstanceOf<ChangePasswordViewModel>());
+        }
+
+        [Test]
+        public void GetChangePassword_ThrowsAnApplicationException_WhenUserDoesNotExist()
+        {
+            var userManager = CreateUserManagerMock();
+            userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
+                .Returns(Task.FromResult((ApplicationUser)null));
+
+            var signInManager = CreateSignInManagerMock(userManager);
+            var controller = CreateControllerInstance(signInManager);
+
+            async Task Act()
+            {
+                var result = await controller.ChangePassword();
+            }
+
+            var ex = Assert.ThrowsAsync<ApplicationException>(Act);
+            Assert.That(ex.Message, Does.StartWith("Unable to load user with ID"));
+        }
+
+        [Test]
+        public async Task PostChangePassword_RedirectsToChangePassword_WhenPasswordSuccessfullyChanged()
+        {
+            var userManager = CreateUserManagerMock();
+            userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
+                .Returns(Task.FromResult(CreateApplicationUser()));
+            userManager.ChangePasswordAsync(Arg.Any<ApplicationUser>(), Arg.Any<string>(), Arg.Any<string>())
+                .Returns(Task.FromResult(IdentityResult.Success));
+
+            var signInManager = CreateSignInManagerMock(userManager);
+            signInManager.SignInAsync(Arg.Any<ApplicationUser>(), isPersistent: false)
+                .Returns(Task.FromResult(0));
+
+            var controller = CreateControllerInstance(signInManager);
+
+            var model = new ChangePasswordViewModel
+            {
+                OldPassword = "password"
+            };
+
+            var result = await controller.ChangePassword(model);
+
+            Assert.That(result, Is.InstanceOf<RedirectToActionResult>());
+            Assert.That((result as RedirectToActionResult).ActionName, Is.EqualTo(nameof(ManageController.ChangePassword)));
+            Assert.That(controller.StatusMessage, Is.EqualTo("Your password has been changed."));
+        }
+
+        [Test]
+        public async Task PostChangePassword_ReturnsViewAndModel_WhenFailingToChangePassword()
+        {
+            var userManager = CreateUserManagerMock();
+            userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
+                .Returns(Task.FromResult(CreateApplicationUser()));
+            userManager.ChangePasswordAsync(Arg.Any<ApplicationUser>(), Arg.Any<string>(), Arg.Any<string>())
+                .Returns(Task.FromResult(IdentityResult.Failed()));
+
+            var signInManager = CreateSignInManagerMock(userManager);
+            var controller = CreateControllerInstance(signInManager);
+
+            var model = new ChangePasswordViewModel
+            {
+                OldPassword = "password"
+            };
+
+            var result = await controller.ChangePassword(model);
+
+            Assert.That(result, Is.InstanceOf<ViewResult>());
+            Assert.That(((result as ViewResult).Model as ChangePasswordViewModel)?.OldPassword, Is.EqualTo("password"));
+        }
+
+        [Test]
+        public async Task PostChangePassword_ReturnsViewAndModel_WhenModelStateIsNotValid()
+        {
+            var userManager = CreateUserManagerMock();
+            userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
+                .Returns(Task.FromResult(CreateApplicationUser()));
+
+            var signInManager = CreateSignInManagerMock(userManager);
+            var controller = CreateControllerInstance(signInManager);
+            controller.ModelState.AddModelError("", "");
+            var model = new ChangePasswordViewModel
+            {
+                OldPassword = "password"
+            };
+
+            var result = await controller.ChangePassword(model);
+
+            Assert.That(result, Is.InstanceOf<ViewResult>());
+            Assert.That(((result as ViewResult).Model as ChangePasswordViewModel)?.OldPassword, Is.EqualTo("password"));
+        }
+
+        [Test]
+        public void PostChangePassword_ThrowsAnApplicationException_WhenUserDoesNotExist()
+        {
+            var userManager = CreateUserManagerMock();
+            userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
+                .Returns(Task.FromResult((ApplicationUser)null));
+
+            var signInManager = CreateSignInManagerMock(userManager);
+            var controller = CreateControllerInstance(signInManager);
+            var model = new ChangePasswordViewModel();
+
+            async Task Act()
+            {
+                var result = await controller.ChangePassword(model);
+            }
+
+            var ex = Assert.ThrowsAsync<ApplicationException>(Act);
+            Assert.That(ex.Message, Does.StartWith("Unable to load user with ID"));
+        }
+        #endregion
 
         private ApplicationUser CreateApplicationUser() =>
             new ApplicationUser
