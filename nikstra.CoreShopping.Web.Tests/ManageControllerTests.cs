@@ -181,6 +181,71 @@ namespace nikstra.CoreShopping.Web.Tests
             Assert.That(ex.Message, Does.StartWith("Unexpected error occurred setting phone number for user with ID"));
         }
 
+        [Test]
+        public async Task PostSendVerificationEmail_SuccessfullySendsEmail_WhenUserExists()
+        {
+            var userManager = CreateUserManagerMock();
+            userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
+                .Returns(Task.FromResult(CreateApplicationUser()));
+
+            userManager.GenerateEmailConfirmationTokenAsync(Arg.Any<ApplicationUser>())
+                .Returns(Task.FromResult("token"));
+
+            var signInManager = CreateSignInManagerMock(userManager);
+            var controller = CreateControllerInstance(signInManager);
+            controller.ControllerContext = new ControllerContext();
+            controller.ControllerContext.HttpContext = new DefaultHttpContext();
+            controller.Request.Scheme = "HTTP";
+            controller.Url = Substitute.For<IUrlHelper>();
+            controller.Url.EmailConfirmationLink(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
+                .Returns("dummy url");
+            var model = CreateIndexViewModel();
+
+            var result = await controller.SendVerificationEmail(model);
+
+            Assert.That(result, Is.InstanceOf<RedirectToActionResult>());
+            Assert.That((result as RedirectToActionResult).ActionName, Is.EqualTo(nameof(ManageController.Index)));
+            Assert.That(controller.StatusMessage, Is.EqualTo("Verification email sent. Please check your email."));
+        }
+
+        [Test]
+        public async Task PostSendVerificationEmail_ReturnsViewAndModel_WhenModelStateIsNotValid()
+        {
+            var userManager = CreateUserManagerMock();
+            userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
+                .Returns(Task.FromResult(CreateApplicationUser()));
+
+            var signInManager = CreateSignInManagerMock(userManager);
+            var controller = CreateControllerInstance(signInManager);
+            controller.ModelState.AddModelError("", "");
+            var model = CreateIndexViewModel();
+
+            var result = await controller.SendVerificationEmail(model);
+
+            Assert.That(result, Is.InstanceOf<ViewResult>());
+            Assert.That(((result as ViewResult).Model as IndexViewModel)?.Username, Is.EqualTo("user@domain.tld"));
+        }
+
+        [Test]
+        public void PostSendVerificationEmail_ThrowsAnApplicationException_WhenUserDoesNotExist()
+        {
+            var userManager = CreateUserManagerMock();
+            userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
+                .Returns(Task.FromResult((ApplicationUser)null));
+
+            var signInManager = CreateSignInManagerMock(userManager);
+            var controller = CreateControllerInstance(signInManager);
+            var model = new IndexViewModel();
+
+            async Task Act()
+            {
+                var result = await controller.SendVerificationEmail(model);
+            }
+
+            var ex = Assert.ThrowsAsync<ApplicationException>(Act);
+            Assert.That(ex.Message, Does.StartWith("Unable to load user with ID"));
+        }
+
         private ApplicationUser CreateApplicationUser() =>
             new ApplicationUser
             {
