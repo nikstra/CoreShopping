@@ -542,6 +542,113 @@ namespace nikstra.CoreShopping.Web.Tests
         }
         #endregion
 
+        #region ExternalLogins() method tests
+        [Test]
+        public async Task GetExternalLogins_ReturnsViewAndModel_WhenUserHasNoExternalLogins()
+        {
+            var userManager = CreateUserManagerMock();
+            userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
+                .Returns(Task.FromResult(CreateApplicationUser()));
+            userManager.GetLoginsAsync(Arg.Any<ApplicationUser>())
+                .Returns(
+                    Task.FromResult<IList<UserLoginInfo>>(new List<UserLoginInfo> { new UserLoginInfo("provider", "name", "key") })
+                );
+            userManager.HasPasswordAsync(Arg.Any<ApplicationUser>())
+                .Returns(Task.FromResult(true));
+
+            var signInManager = CreateSignInManagerMock(userManager);
+            signInManager.GetExternalAuthenticationSchemesAsync()
+                .Returns(
+                    Task.FromResult<IEnumerable<AuthenticationScheme>>(new List<AuthenticationScheme>())
+                );
+            var controller = CreateControllerInstance(signInManager);
+
+            var result = await controller.ExternalLogins();
+
+            Assert.That(result, Is.InstanceOf<ViewResult>());
+            Assert.That(((result as ViewResult).Model as ExternalLoginsViewModel).StatusMessage, Is.EqualTo(controller.StatusMessage));
+            Assert.That(((result as ViewResult).Model as ExternalLoginsViewModel).ShowRemoveButton, Is.True);
+        }
+
+        [Test]
+        public async Task GetExternalLogins_ReturnsViewAndModel_WhenUserHasExternalLogins()
+        {
+            var userManager = CreateUserManagerMock();
+            userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
+                .Returns(Task.FromResult(CreateApplicationUser()));
+            userManager.GetLoginsAsync(Arg.Any<ApplicationUser>())
+                .Returns(
+                    Task.FromResult<IList<UserLoginInfo>>(new List<UserLoginInfo> { new UserLoginInfo("provider", "name", "key") })
+                );
+            userManager.HasPasswordAsync(Arg.Any<ApplicationUser>())
+                .Returns(Task.FromResult(true));
+
+            var signInManager = CreateSignInManagerMock(userManager);
+            signInManager.GetExternalAuthenticationSchemesAsync()
+                .Returns(
+                    Task.FromResult<IEnumerable<AuthenticationScheme>>(
+                        new List<AuthenticationScheme>
+                        {
+                            new AuthenticationScheme("name", "displayName", Substitute.For<IAuthenticationHandler>().GetType())
+                        })
+                );
+            var controller = CreateControllerInstance(signInManager);
+
+            var result = await controller.ExternalLogins();
+
+            Assert.That(result, Is.InstanceOf<ViewResult>());
+            Assert.That(((result as ViewResult).Model as ExternalLoginsViewModel).StatusMessage, Is.EqualTo(controller.StatusMessage));
+            Assert.That(((result as ViewResult).Model as ExternalLoginsViewModel).ShowRemoveButton, Is.True);
+        }
+
+        [Test]
+        public async Task GetExternalLogins_SetsModelShowRemoveButtonToFalse_WhenUserHasOnlyOneLogin()
+        {
+            var userManager = CreateUserManagerMock();
+            userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
+                .Returns(Task.FromResult(CreateApplicationUser()));
+            userManager.GetLoginsAsync(Arg.Any<ApplicationUser>())
+                .Returns(
+                    Task.FromResult<IList<UserLoginInfo>>(new List<UserLoginInfo>())
+                );
+            userManager.HasPasswordAsync(Arg.Any<ApplicationUser>())
+                .Returns(Task.FromResult(false));
+
+            var signInManager = CreateSignInManagerMock(userManager);
+            signInManager.GetExternalAuthenticationSchemesAsync()
+                .Returns(
+                    Task.FromResult<IEnumerable<AuthenticationScheme>>(
+                        new List<AuthenticationScheme>())
+                );
+            var controller = CreateControllerInstance(signInManager);
+
+            var result = await controller.ExternalLogins();
+
+            Assert.That(result, Is.InstanceOf<ViewResult>());
+            Assert.That(((result as ViewResult).Model as ExternalLoginsViewModel).StatusMessage, Is.EqualTo(controller.StatusMessage));
+            Assert.That(((result as ViewResult).Model as ExternalLoginsViewModel).ShowRemoveButton, Is.False);
+        }
+
+        [Test]
+        public void GetExternalLogins_ThrowsAnApplicationException_WhenUserDoesNotExist()
+        {
+            var userManager = CreateUserManagerMock();
+            userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
+                .Returns(Task.FromResult((ApplicationUser)null));
+
+            var signInManager = CreateSignInManagerMock(userManager);
+            var controller = CreateControllerInstance(signInManager);
+
+            async Task Act()
+            {
+                var result = await controller.ExternalLogins();
+            }
+
+            var ex = Assert.ThrowsAsync<ApplicationException>(Act);
+            Assert.That(ex.Message, Does.StartWith("Unable to load user with ID"));
+        }
+        #endregion
+
         private ApplicationUser CreateApplicationUser() =>
             new ApplicationUser
             {
