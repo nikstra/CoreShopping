@@ -401,6 +401,147 @@ namespace nikstra.CoreShopping.Web.Tests
         }
         #endregion
 
+        #region SetPassword() method tests
+        [Test]
+        public async Task GetSetPassword_SuccessfullyReturnsViewAndModel_WhenUserDoesNotHaveAPassword()
+        {
+            var userManager = CreateUserManagerMock();
+            userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
+                .Returns(Task.FromResult(CreateApplicationUser()));
+
+            userManager.HasPasswordAsync(Arg.Any<ApplicationUser>())
+                .Returns(Task.FromResult(false));
+
+            var signInManager = CreateSignInManagerMock(userManager);
+            var controller = CreateControllerInstance(signInManager);
+            controller.StatusMessage = "message";
+
+            var result = await controller.SetPassword();
+
+            Assert.That(result, Is.InstanceOf<ViewResult>());
+            Assert.That(((result as ViewResult).Model as SetPasswordViewModel).StatusMessage, Is.EqualTo("message"));
+        }
+
+        [Test]
+        public async Task GetSetPassword_RedirectsToChangePassword_WhenUserHasAPassword()
+        {
+            var userManager = CreateUserManagerMock();
+            userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
+                .Returns(Task.FromResult(CreateApplicationUser()));
+
+            userManager.HasPasswordAsync(Arg.Any<ApplicationUser>())
+                .Returns(Task.FromResult(true));
+
+            var signInManager = CreateSignInManagerMock(userManager);
+            var controller = CreateControllerInstance(signInManager);
+
+            var result = await controller.SetPassword();
+
+            Assert.That(result, Is.InstanceOf<RedirectToActionResult>());
+            Assert.That((result as RedirectToActionResult).ActionName, Is.EqualTo(nameof(ManageController.ChangePassword)));
+        }
+
+        [Test]
+        public void GetSetPassword_ThrowsAnApplicationException_WhenUserDoesNotExist()
+        {
+            var userManager = CreateUserManagerMock();
+            userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
+                .Returns(Task.FromResult((ApplicationUser)null));
+
+            var signInManager = CreateSignInManagerMock(userManager);
+            var controller = CreateControllerInstance(signInManager);
+
+            async Task Act()
+            {
+                var result = await controller.SetPassword();
+            }
+
+            var ex = Assert.ThrowsAsync<ApplicationException>(Act);
+            Assert.That(ex.Message, Does.StartWith("Unable to load user with ID"));
+        }
+
+        [Test]
+        public async Task PostSetPassword_RedirectsToSetPassword_WhenPasswordIsSuccessfullySet()
+        {
+            var userManager = CreateUserManagerMock();
+            userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
+                .Returns(Task.FromResult(CreateApplicationUser()));
+            userManager.AddPasswordAsync(Arg.Any<ApplicationUser>(), Arg.Any<string>()).
+                Returns(Task.FromResult(IdentityResult.Success));
+
+            var signInManager = CreateSignInManagerMock(userManager);
+            signInManager.SignInAsync(Arg.Any<ApplicationUser>(), isPersistent: false)
+                .Returns(Task.FromResult(0));
+
+            var controller = CreateControllerInstance(signInManager);
+            var model = new SetPasswordViewModel();
+
+            var result = await controller.SetPassword(model);
+
+            Assert.That(result, Is.InstanceOf<RedirectToActionResult>());
+            Assert.That((result as RedirectToActionResult).ActionName, Is.EqualTo(nameof(ManageController.SetPassword)));
+            Assert.That(controller.StatusMessage, Is.EqualTo("Your password has been set."));
+        }
+
+        [Test]
+        public async Task PostSetPassword_ReturnsViewAndModel_WhenModelStateIsNotValid()
+        {
+            var userManager = CreateUserManagerMock();
+            userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
+                .Returns(Task.FromResult(CreateApplicationUser()));
+
+            var signInManager = CreateSignInManagerMock(userManager);
+            var controller = CreateControllerInstance(signInManager);
+            controller.ModelState.AddModelError("", "");
+            var model = new SetPasswordViewModel();
+
+            var result = await controller.SetPassword(model);
+
+            Assert.That(result, Is.InstanceOf<ViewResult>());
+            Assert.That((result as ViewResult).Model, Is.InstanceOf<SetPasswordViewModel>());
+        }
+
+        [Test]
+        public async Task PostSetPassword_ReturnsViewAndModel_WhenPasswordCouldNotBeSet()
+        {
+            var userManager = CreateUserManagerMock();
+            userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
+                .Returns(Task.FromResult(CreateApplicationUser()));
+            userManager.AddPasswordAsync(Arg.Any<ApplicationUser>(), Arg.Any<string>()).
+                Returns(Task.FromResult(IdentityResult.Failed(
+                    new IdentityError { Code = "code", Description = "description" })));
+
+            var signInManager = CreateSignInManagerMock(userManager);
+            var controller = CreateControllerInstance(signInManager);
+            var model = new SetPasswordViewModel();
+
+            var result = await controller.SetPassword(model);
+
+            Assert.That(result, Is.InstanceOf<ViewResult>());
+            Assert.That((result as ViewResult).ViewData.ModelState.ErrorCount, Is.GreaterThan(0));
+        }
+
+        [Test]
+        public void PostSetPassword_ThrowsAnApplicationException_WhenUserDoesNotExist()
+        {
+            var userManager = CreateUserManagerMock();
+            userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
+                .Returns(Task.FromResult((ApplicationUser)null));
+
+            var signInManager = CreateSignInManagerMock(userManager);
+            var controller = CreateControllerInstance(signInManager);
+            var model = new SetPasswordViewModel();
+
+            async Task Act()
+            {
+                var result = await controller.SetPassword(model);
+            }
+
+            var ex = Assert.ThrowsAsync<ApplicationException>(Act);
+            Assert.That(ex.Message, Does.StartWith("Unable to load user with ID"));
+        }
+        #endregion
+
         private ApplicationUser CreateApplicationUser() =>
             new ApplicationUser
             {
