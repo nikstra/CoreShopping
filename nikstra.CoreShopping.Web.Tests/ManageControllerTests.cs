@@ -836,6 +836,49 @@ namespace nikstra.CoreShopping.Web.Tests
         }
         #endregion
 
+        #region TwoFactorAuthentication() method tests
+        [Test]
+        public async Task GetTwoFactorAuthentication_ReturnsViewAndModel_WhenUserExists()
+        {
+            var userManager = CreateUserManagerMock();
+            userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
+                .Returns(Task.FromResult(CreateApplicationUser()));
+            userManager.GetAuthenticatorKeyAsync(Arg.Any<ApplicationUser>())
+                .Returns(Task.FromResult("key"));
+            userManager.CountRecoveryCodesAsync(Arg.Any<ApplicationUser>())
+                .Returns(Task.FromResult(1));
+
+            var signInManager = CreateSignInManagerMock(userManager);
+            var controller = CreateControllerInstance(signInManager);
+
+            var result = await controller.TwoFactorAuthentication();
+
+            Assert.That(result, Is.InstanceOf<ViewResult>());
+            Assert.That((result as ViewResult).Model, Is.InstanceOf<TwoFactorAuthenticationViewModel>());
+            Assert.That(((result as ViewResult).Model as TwoFactorAuthenticationViewModel).HasAuthenticator, Is.True);
+            Assert.That(((result as ViewResult).Model as TwoFactorAuthenticationViewModel).Is2faEnabled, Is.False);
+            Assert.That(((result as ViewResult).Model as TwoFactorAuthenticationViewModel).RecoveryCodesLeft, Is.EqualTo(1));
+        }
+
+        public void GetTwoFactorAuthentication_ThrowsAnApplicationException_WhenUserDoesNotExist()
+        {
+            var userManager = CreateUserManagerMock();
+            userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
+                .Returns(Task.FromResult((ApplicationUser)null));
+
+            var signInManager = CreateSignInManagerMock(userManager);
+            var controller = CreateControllerInstance(signInManager);
+
+            async Task Act()
+            {
+                var result = await controller.TwoFactorAuthentication();
+            }
+
+            var ex = Assert.ThrowsAsync<ApplicationException>(Act);
+            Assert.That(ex.Message, Does.StartWith("Unable to load user with ID"));
+        }
+        #endregion
+
         private ApplicationUser CreateApplicationUser() =>
             new ApplicationUser
             {
