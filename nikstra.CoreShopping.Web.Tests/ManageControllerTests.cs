@@ -770,6 +770,72 @@ namespace nikstra.CoreShopping.Web.Tests
         }
         #endregion
 
+        #region RemoveLogin() method tests
+        [Test]
+        public async Task PostRemoveLogin_RedirectsToExternalLogins_WhenLoginIsRemoved()
+        {
+            var userManager = CreateUserManagerMock();
+            userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
+                .Returns(Task.FromResult(CreateApplicationUser()));
+            userManager.RemoveLoginAsync(Arg.Any<ApplicationUser>(), Arg.Any<string>(), Arg.Any<string>())
+                .Returns(Task.FromResult(IdentityResult.Success));
+
+            var signInManager = CreateSignInManagerMock(userManager);
+            signInManager.SignInAsync(Arg.Any<ApplicationUser>(), Arg.Any<bool>())
+                .Returns(Task.FromResult(0));
+            var controller = CreateControllerInstance(signInManager);
+            var model = new RemoveLoginViewModel();
+
+            var result = await controller.RemoveLogin(model);
+
+            Assert.That(result, Is.InstanceOf<RedirectToActionResult>());
+            Assert.That((result as RedirectToActionResult).ActionName, Is.EqualTo(nameof(ManageController.ExternalLogins)));
+            Assert.That(controller.StatusMessage, Is.EqualTo("The external login was removed."));
+        }
+
+        [Test]
+        public void PostRemoveLogin_ThrowsAnApplicationException_WhenUserDoesNotExist()
+        {
+            var userManager = CreateUserManagerMock();
+            userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
+                .Returns(Task.FromResult((ApplicationUser)null));
+
+            var signInManager = CreateSignInManagerMock(userManager);
+            var controller = CreateControllerInstance(signInManager);
+            var model = new RemoveLoginViewModel();
+
+            async Task Act()
+            {
+                var result = await controller.RemoveLogin(model);
+            }
+
+            var ex = Assert.ThrowsAsync<ApplicationException>(Act);
+            Assert.That(ex.Message, Does.StartWith("Unable to load user with ID"));
+        }
+
+        [Test]
+        public void PostRemoveLogin_ThrowsAnApplicationException_WhenFailingToRemoveLogin()
+        {
+            var userManager = CreateUserManagerMock();
+            userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
+                .Returns(Task.FromResult(CreateApplicationUser()));
+            userManager.RemoveLoginAsync(Arg.Any<ApplicationUser>(), Arg.Any<string>(), Arg.Any<string>())
+                .Returns(Task.FromResult(IdentityResult.Failed(new IdentityError { Code = "code", Description = "description" })));
+
+            var signInManager = CreateSignInManagerMock(userManager);
+            var controller = CreateControllerInstance(signInManager);
+            var model = new RemoveLoginViewModel();
+
+            async Task Act()
+            {
+                var result = await controller.RemoveLogin(model);
+            }
+
+            var ex = Assert.ThrowsAsync<ApplicationException>(Act);
+            Assert.That(ex.Message, Does.StartWith("Unexpected error occurred removing external login for user with ID"));
+        }
+        #endregion
+
         private ApplicationUser CreateApplicationUser() =>
             new ApplicationUser
             {
