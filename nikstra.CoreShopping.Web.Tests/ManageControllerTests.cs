@@ -676,6 +676,100 @@ namespace nikstra.CoreShopping.Web.Tests
         }
         #endregion
 
+        #region LinkLoginCallback() method tests
+        [Test]
+        public async Task GetLinkLoginCallback_RedirectsToExternalLogins_WhenLoginIsSuccessfullyAdded()
+        {
+            var userManager = CreateUserManagerMock();
+            userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
+                .Returns(Task.FromResult(CreateApplicationUser()));
+            userManager.AddLoginAsync(Arg.Any<ApplicationUser>(), Arg.Any<ExternalLoginInfo>())
+                .Returns(Task.FromResult(IdentityResult.Success));
+
+            var signInManager = CreateSignInManagerMock(userManager);
+            signInManager.GetExternalLoginInfoAsync(Arg.Any<string>())
+                .Returns(Task.FromResult(Substitute.For<ExternalLoginInfo>(
+                    new ClaimsPrincipal(), "loginProvider", "providerKey", "displayName")));
+
+            var controller = CreateControllerInstance(signInManager);
+            controller.ControllerContext.HttpContext = new DefaultHttpContext();
+            controller.HttpContext.RequestServices = Substitute.For<IServiceProvider>();
+            controller.HttpContext.RequestServices.GetService(typeof(IAuthenticationService))
+                .Returns(Substitute.For<IAuthenticationService>());
+            controller.Url = Substitute.For<IUrlHelper>();
+
+            var result = await controller.LinkLoginCallback();
+
+            Assert.That(result, Is.InstanceOf<RedirectToActionResult>());
+            Assert.That((result as RedirectToActionResult).ActionName, Is.EqualTo(nameof(ManageController.ExternalLogins)));
+            Assert.That(controller.StatusMessage, Is.EqualTo("The external login was added."));
+        }
+
+        [Test]
+        public void GetLinkLoginCallback_ThrowsAnApplicationException_WhenUserDoesNotExist()
+        {
+            var userManager = CreateUserManagerMock();
+            userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
+                .Returns(Task.FromResult((ApplicationUser)null));
+
+            var signInManager = CreateSignInManagerMock(userManager);
+            var controller = CreateControllerInstance(signInManager);
+
+            async Task Act()
+            {
+                var result = await controller.LinkLoginCallback();
+            }
+
+            var ex = Assert.ThrowsAsync<ApplicationException>(Act);
+            Assert.That(ex.Message, Does.StartWith("Unable to load user with ID"));
+        }
+
+        [Test]
+        public void GetLinkLoginCallback_ThrowsAnApplicationException_WhenFailingToGetExternalLoginInfo()
+        {
+            var userManager = CreateUserManagerMock();
+            userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
+                .Returns(Task.FromResult(CreateApplicationUser()));
+
+            var signInManager = CreateSignInManagerMock(userManager);
+            signInManager.GetExternalLoginInfoAsync(Arg.Any<string>())
+                .Returns((ExternalLoginInfo)null);
+            var controller = CreateControllerInstance(signInManager);
+
+            async Task Act()
+            {
+                var result = await controller.LinkLoginCallback();
+            }
+
+            var ex = Assert.ThrowsAsync<ApplicationException>(Act);
+            Assert.That(ex.Message, Does.StartWith("Unexpected error occurred loading external login info for user with ID"));
+        }
+
+        [Test]
+        public void GetLinkLoginCallback_ThrowsAnApplicationException_WhenFailingToAddLogin()
+        {
+            var userManager = CreateUserManagerMock();
+            userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
+                .Returns(Task.FromResult(CreateApplicationUser()));
+            userManager.AddLoginAsync(Arg.Any<ApplicationUser>(), Arg.Any<ExternalLoginInfo>())
+                .Returns(Task.FromResult(IdentityResult.Failed(new IdentityError { Code = "code", Description = "description" })));
+
+            var signInManager = CreateSignInManagerMock(userManager);
+            signInManager.GetExternalLoginInfoAsync(Arg.Any<string>())
+                .Returns(Task.FromResult(Substitute.For<ExternalLoginInfo>(
+                    new ClaimsPrincipal(), "loginProvider", "providerKey", "displayName")));
+            var controller = CreateControllerInstance(signInManager);
+
+            async Task Act()
+            {
+                var result = await controller.LinkLoginCallback();
+            }
+
+            var ex = Assert.ThrowsAsync<ApplicationException>(Act);
+            Assert.That(ex.Message, Does.StartWith("Unexpected error occurred adding external login for user with ID"));
+        }
+        #endregion
+
         private ApplicationUser CreateApplicationUser() =>
             new ApplicationUser
             {
