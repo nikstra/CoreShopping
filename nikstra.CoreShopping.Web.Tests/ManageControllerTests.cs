@@ -649,6 +649,33 @@ namespace nikstra.CoreShopping.Web.Tests
         }
         #endregion
 
+        #region LinkLogin() method tests
+        [Test]
+        public async Task PostLinkLogin_ReturnsChallengeResult_WhenSuccessful()
+        {
+            var userManager = CreateUserManagerMock();
+
+            var signInManager = CreateSignInManagerMock(userManager);
+            signInManager.ConfigureExternalAuthenticationProperties(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
+                .Returns(new AuthenticationProperties());
+
+            var controller = CreateControllerInstance(signInManager);
+            controller.ControllerContext.HttpContext = new DefaultHttpContext();
+            controller.HttpContext.RequestServices = Substitute.For<IServiceProvider>();
+            controller.HttpContext.RequestServices.GetService(typeof(IAuthenticationService))
+                .Returns(Substitute.For<IAuthenticationService>());
+            controller.Url = Substitute.For<IUrlHelper>();
+            controller.Url.EmailConfirmationLink(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
+                .Returns("dummy url");
+
+            var result = await controller.LinkLogin("provider");
+
+            Assert.That(result, Is.InstanceOf<ChallengeResult>());
+            Assert.That((result as ChallengeResult).Properties, Is.InstanceOf<AuthenticationProperties>());
+            Assert.That((result as ChallengeResult).AuthenticationSchemes[0], Is.EqualTo("provider"));
+        }
+        #endregion
+
         private ApplicationUser CreateApplicationUser() =>
             new ApplicationUser
             {
