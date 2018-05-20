@@ -937,6 +937,66 @@ namespace nikstra.CoreShopping.Web.Tests
         }
         #endregion
 
+        #region Disable2fa() method tests
+        [Test]
+        public async Task PostDisable2fa_RedirectsToTwoFactorAuthentication_WhenUseExists()
+        {
+            var userManager = CreateUserManagerMock();
+            userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
+                .Returns(Task.FromResult(CreateApplicationUser()));
+            userManager.SetTwoFactorEnabledAsync(Arg.Any<ApplicationUser>(), Arg.Any<bool>())
+                .Returns(Task.FromResult(IdentityResult.Success));
+
+            var signInManager = CreateSignInManagerMock(userManager);
+            var controller = CreateControllerInstance(signInManager);
+
+            var result = await controller.Disable2fa();
+
+            Assert.That(result, Is.InstanceOf<RedirectToActionResult>());
+            Assert.That((result as RedirectToActionResult).ActionName, Is.EqualTo(nameof(ManageController.TwoFactorAuthentication)));
+        }
+
+        [Test]
+        public void PostDisable2fa_ThrowsAnApplicationException_WhenUserDoesNotExist()
+        {
+            var userManager = CreateUserManagerMock();
+            userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
+                .Returns(Task.FromResult((ApplicationUser)null));
+
+            var signInManager = CreateSignInManagerMock(userManager);
+            var controller = CreateControllerInstance(signInManager);
+
+            async Task Act()
+            {
+                var result = await controller.Disable2fa();
+            }
+
+            var ex = Assert.ThrowsAsync<ApplicationException>(Act);
+            Assert.That(ex.Message, Does.StartWith("Unable to load user with ID"));
+        }
+
+        [Test]
+        public void PostDisable2fa_ThrowsAnApplicationException_WhenFailingToDisable2FactorAuth()
+        {
+            var userManager = CreateUserManagerMock();
+            userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
+                .Returns(Task.FromResult(CreateApplicationUser()));
+            userManager.SetTwoFactorEnabledAsync(Arg.Any<ApplicationUser>(), Arg.Any<bool>())
+                .Returns(Task.FromResult(IdentityResult.Failed(new IdentityError { Code = "code", Description = "description" })));
+
+            var signInManager = CreateSignInManagerMock(userManager);
+            var controller = CreateControllerInstance(signInManager);
+
+            async Task Act()
+            {
+                var result = await controller.Disable2fa();
+            }
+
+            var ex = Assert.ThrowsAsync<ApplicationException>(Act);
+            Assert.That(ex.Message, Does.StartWith("Unexpected error occured disabling 2FA for user with ID"));
+        }
+        #endregion
+
         private ApplicationUser CreateApplicationUser() =>
             new ApplicationUser
             {
