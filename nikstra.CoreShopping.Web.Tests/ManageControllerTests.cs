@@ -1281,6 +1281,67 @@ namespace nikstra.CoreShopping.Web.Tests
         }
         #endregion
 
+        #region GenerateRecoveryCodes() method tests
+        [Test]
+        public async Task PostGenerateRecoveryCodes_ReturnsViewShowRecoveryCodesAndModel_WhenUserHasTwoFactorEnabled()
+        {
+            var user = CreateApplicationUser();
+            user.TwoFactorEnabled = true;
+            var userManager = CreateUserManagerMock();
+            userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
+                .Returns(Task.FromResult(user));
+            userManager.GenerateNewTwoFactorRecoveryCodesAsync(Arg.Any<ApplicationUser>(), Arg.Any<int>())
+                .Returns(Task.FromResult<IEnumerable<string>>(new List<string> { "1", "2", "3", "4", "5", "6", "7", "8", "9", "10" }));
+
+            var signInManager = CreateSignInManagerMock(userManager);
+            var controller = CreateControllerInstance(signInManager);
+
+            var result = await controller.GenerateRecoveryCodes();
+
+            Assert.That(result, Is.InstanceOf<ViewResult>());
+            Assert.That((result as ViewResult).ViewName, Is.EqualTo(nameof(ManageController.ShowRecoveryCodes)));
+            Assert.That((result as ViewResult).Model, Is.InstanceOf<ShowRecoveryCodesViewModel>());
+        }
+
+        [Test]
+        public void PostGenerateRecoveryCodes_ThrowsAnApplicationException_WhenUserDoesNotExist()
+        {
+            var userManager = CreateUserManagerMock();
+            userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
+                .Returns(Task.FromResult((ApplicationUser)null));
+
+            var signInManager = CreateSignInManagerMock(userManager);
+            var controller = CreateControllerInstance(signInManager);
+
+            async Task Act()
+            {
+                var result = await controller.GenerateRecoveryCodes();
+            }
+
+            var ex = Assert.ThrowsAsync<ApplicationException>(Act);
+            Assert.That(ex.Message, Does.StartWith("Unable to load user with ID"));
+        }
+
+        [Test]
+        public void PostGenerateRecoveryCodes_ThrowsAnApplicationException_WhenUserDoesNotHaveTwoFactorEnabled()
+        {
+            var userManager = CreateUserManagerMock();
+            userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
+                .Returns(Task.FromResult(CreateApplicationUser()));
+
+            var signInManager = CreateSignInManagerMock(userManager);
+            var controller = CreateControllerInstance(signInManager);
+
+            async Task Act()
+            {
+                var result = await controller.GenerateRecoveryCodes();
+            }
+
+            var ex = Assert.ThrowsAsync<ApplicationException>(Act);
+            Assert.That(ex.Message, Does.StartWith("Cannot generate recovery codes for user with ID"));
+        }
+        #endregion
+
         private ApplicationUser CreateApplicationUser() =>
             new ApplicationUser
             {
