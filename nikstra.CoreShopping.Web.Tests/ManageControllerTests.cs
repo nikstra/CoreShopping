@@ -1130,6 +1130,42 @@ namespace nikstra.CoreShopping.Web.Tests
         }
         #endregion
 
+        #region ShowRecoveryCodes() method tests
+        [Test]
+        public void GetShowRecoveryCodes_ReturnsViewAndModel_WhenRecoveryCodesExists()
+        {
+            var userManager = CreateUserManagerMock();
+
+            var signInManager = CreateSignInManagerMock(userManager);
+            var controller = CreateControllerInstance(signInManager);
+            controller.ControllerContext.HttpContext = new DefaultHttpContext();
+            controller.TempData = new TempDataDictionary(controller.HttpContext, Substitute.For<ITempDataProvider>());
+            controller.TempData["RecoveryCodesKey"] = new string[] { };
+
+            var result = controller.ShowRecoveryCodes();
+
+            Assert.That(result, Is.InstanceOf<ViewResult>());
+            Assert.That((result as ViewResult).Model, Is.InstanceOf<ShowRecoveryCodesViewModel>());
+        }
+
+        [Test]
+        public void GetShowRecoveryCodes_RedirectsToTwoFactorAuthentication_WhenNoRecoveryCodesExist()
+        {
+            var userManager = CreateUserManagerMock();
+
+            var signInManager = CreateSignInManagerMock(userManager);
+            var controller = CreateControllerInstance(signInManager);
+            controller.ControllerContext.HttpContext = new DefaultHttpContext();
+            controller.TempData = new TempDataDictionary(controller.HttpContext, Substitute.For<ITempDataProvider>());
+            controller.TempData["RecoveryCodesKey"] = null;
+
+            var result = controller.ShowRecoveryCodes();
+
+            Assert.That(result, Is.InstanceOf<RedirectToActionResult>());
+            Assert.That((result as RedirectToActionResult).ActionName, Is.EqualTo(nameof(ManageController.TwoFactorAuthentication)));
+        }
+        #endregion
+
         private ApplicationUser CreateApplicationUser() =>
             new ApplicationUser
             {
