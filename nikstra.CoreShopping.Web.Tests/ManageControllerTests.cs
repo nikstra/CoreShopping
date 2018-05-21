@@ -1182,6 +1182,47 @@ namespace nikstra.CoreShopping.Web.Tests
         }
         #endregion
 
+        #region ResetAuthenticator() method tests
+        [Test]
+        public async Task PostResetAuthenticator_RedirectsToEnableAuthenticator_WhenAuthenticationIsReset()
+        {
+            var userManager = CreateUserManagerMock();
+            userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
+                .Returns(Task.FromResult(CreateApplicationUser()));
+            userManager.SetTwoFactorEnabledAsync(Arg.Any<ApplicationUser>(), Arg.Any<bool>())
+                .Returns(Task.FromResult(IdentityResult.Success));
+            userManager.ResetAuthenticatorKeyAsync(Arg.Any<ApplicationUser>())
+                .Returns(Task.FromResult(IdentityResult.Success));
+
+            var signInManager = CreateSignInManagerMock(userManager);
+            var controller = CreateControllerInstance(signInManager);
+
+            var result = await controller.ResetAuthenticator();
+
+            Assert.That(result, Is.InstanceOf<RedirectToActionResult>());
+            Assert.That((result as RedirectToActionResult).ActionName, Is.EqualTo(nameof(ManageController.EnableAuthenticator)));
+        }
+
+        [Test]
+        public void PostResetAuthenticator_ThrowsAnApplicationException_WhenUserDoesNotExist()
+        {
+            var userManager = CreateUserManagerMock();
+            userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
+                .Returns(Task.FromResult((ApplicationUser)null));
+
+            var signInManager = CreateSignInManagerMock(userManager);
+            var controller = CreateControllerInstance(signInManager);
+
+            async Task Act()
+            {
+                var result = await controller.ResetAuthenticator();
+            }
+
+            var ex = Assert.ThrowsAsync<ApplicationException>(Act);
+            Assert.That(ex.Message, Does.StartWith("Unable to load user with ID"));
+        }
+        #endregion
+
         private ApplicationUser CreateApplicationUser() =>
             new ApplicationUser
             {
