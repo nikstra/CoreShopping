@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using nikstra.CoreShopping.Web.Controllers;
@@ -994,6 +995,138 @@ namespace nikstra.CoreShopping.Web.Tests
 
             var ex = Assert.ThrowsAsync<ApplicationException>(Act);
             Assert.That(ex.Message, Does.StartWith("Unexpected error occured disabling 2FA for user with ID"));
+        }
+        #endregion
+
+        #region EnableAuthenticator() method tests
+        [Test]
+        public async Task GetEnableAuthenticator_ReturnsViewAndModel_WhenUserExists()
+        {
+            var userManager = CreateUserManagerMock();
+            userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
+                .Returns(Task.FromResult(CreateApplicationUser()));
+            userManager.GetAuthenticatorKeyAsync(Arg.Any<ApplicationUser>())
+                .Returns(Task.FromResult("key"));
+            userManager.ResetAuthenticatorKeyAsync(Arg.Any<ApplicationUser>())
+                .Returns(Task.FromResult(IdentityResult.Success));
+
+            var signInManager = CreateSignInManagerMock(userManager);
+            var controller = CreateControllerInstance(signInManager);
+
+            var result = await controller.EnableAuthenticator();
+
+            Assert.That(result, Is.InstanceOf<ViewResult>());
+            Assert.That((result as ViewResult).Model, Is.InstanceOf<EnableAuthenticatorViewModel>());
+        }
+
+        [Test]
+        public void GetEnableAuthenticator_ThrowsAnApplicationException_WhenUserDoesNotExist()
+        {
+            var userManager = CreateUserManagerMock();
+            userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
+                .Returns(Task.FromResult((ApplicationUser)null));
+
+            var signInManager = CreateSignInManagerMock(userManager);
+            var controller = CreateControllerInstance(signInManager);
+
+            async Task Act()
+            {
+                var result = await controller.EnableAuthenticator();
+            }
+
+            var ex = Assert.ThrowsAsync<ApplicationException>(Act);
+            Assert.That(ex.Message, Does.StartWith("Unable to load user with ID"));
+        }
+
+        [Test]
+        public async Task PostEnableAuthenticator_RedirectsToShowRecoveryCodes_WhenUserExistsAndTwoFactorTokenIsValid()
+        {
+            var userManager = CreateUserManagerMock();
+            userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
+                .Returns(Task.FromResult(CreateApplicationUser()));
+            userManager.VerifyTwoFactorTokenAsync(Arg.Any<ApplicationUser>(), Arg.Any<string>(), Arg.Any<string>())
+                .Returns(Task.FromResult(true));
+            userManager.SetTwoFactorEnabledAsync(Arg.Any<ApplicationUser>(), Arg.Any<bool>())
+                .Returns(Task.FromResult(IdentityResult.Success));
+            userManager.GenerateNewTwoFactorRecoveryCodesAsync(Arg.Any<ApplicationUser>(), Arg.Any<int>())
+                .Returns(Task.FromResult<IEnumerable<string>>(new List<string> { "1", "2", "3", "4", "5", "6", "7", "8", "9", "10" }));
+
+            var signInManager = CreateSignInManagerMock(userManager);
+            var controller = CreateControllerInstance(signInManager);
+            controller.ControllerContext.HttpContext = new DefaultHttpContext();
+            controller.TempData = new TempDataDictionary(controller.HttpContext, Substitute.For<ITempDataProvider>());
+            var model = new EnableAuthenticatorViewModel { AuthenticatorUri = "uri", Code = "code", SharedKey = "key" };
+
+            var result = await controller.EnableAuthenticator(model);
+
+            Assert.That(result, Is.InstanceOf<RedirectToActionResult>());
+            Assert.That((result as RedirectToActionResult).ActionName, Is.EqualTo(nameof(ManageController.ShowRecoveryCodes)));
+        }
+
+        [Test]
+        public async Task PostEnableAuthenticator_ReturnsViewAndModel_WhenModelStateIsNotValid()
+        {
+            var userManager = CreateUserManagerMock();
+            userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
+                .Returns(Task.FromResult(CreateApplicationUser()));
+            userManager.GetAuthenticatorKeyAsync(Arg.Any<ApplicationUser>())
+                .Returns(Task.FromResult("key"));
+            userManager.ResetAuthenticatorKeyAsync(Arg.Any<ApplicationUser>())
+                .Returns(Task.FromResult(IdentityResult.Success));
+
+            var signInManager = CreateSignInManagerMock(userManager);
+            var controller = CreateControllerInstance(signInManager);
+            controller.ModelState.AddModelError("", "");
+            var model = new EnableAuthenticatorViewModel();
+
+            var result = await controller.EnableAuthenticator(model);
+
+            Assert.That(result, Is.InstanceOf<ViewResult>());
+            Assert.That((result as ViewResult).Model, Is.InstanceOf<EnableAuthenticatorViewModel>());
+        }
+
+        [Test]
+        public async Task PostEnableAuthenticator_ReturnsViewAndModel_WhenTwoFactorTokenIsNotValid()
+        {
+            var userManager = CreateUserManagerMock();
+            userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
+                .Returns(Task.FromResult(CreateApplicationUser()));
+            userManager.VerifyTwoFactorTokenAsync(Arg.Any<ApplicationUser>(), Arg.Any<string>(), Arg.Any<string>())
+                .Returns(Task.FromResult(false));
+            userManager.GetAuthenticatorKeyAsync(Arg.Any<ApplicationUser>())
+                .Returns(Task.FromResult("key"));
+            userManager.ResetAuthenticatorKeyAsync(Arg.Any<ApplicationUser>())
+                .Returns(Task.FromResult(IdentityResult.Success));
+
+            var signInManager = CreateSignInManagerMock(userManager);
+            var controller = CreateControllerInstance(signInManager);
+            var model = new EnableAuthenticatorViewModel { AuthenticatorUri = "uri", Code = "code", SharedKey = "key" };
+
+            var result = await controller.EnableAuthenticator(model);
+
+            Assert.That(result, Is.InstanceOf<ViewResult>());
+            Assert.That((result as ViewResult).Model, Is.InstanceOf<EnableAuthenticatorViewModel>());
+            Assert.That(controller.ModelState["Code"].Errors[0].ErrorMessage, Is.EqualTo("Verification code is invalid."));
+        }
+
+        [Test]
+        public void PostEnableAuthenticator_ThrowsAnApplicationException_WhenUserDoesNotExist()
+        {
+            var userManager = CreateUserManagerMock();
+            userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
+                .Returns(Task.FromResult((ApplicationUser)null));
+
+            var signInManager = CreateSignInManagerMock(userManager);
+            var controller = CreateControllerInstance(signInManager);
+            var model = new EnableAuthenticatorViewModel();
+
+            async Task Act()
+            {
+                var result = await controller.EnableAuthenticator(model);
+            }
+
+            var ex = Assert.ThrowsAsync<ApplicationException>(Act);
+            Assert.That(ex.Message, Does.StartWith("Unable to load user with ID"));
         }
         #endregion
 
