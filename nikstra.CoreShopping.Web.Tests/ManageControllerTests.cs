@@ -1223,6 +1223,64 @@ namespace nikstra.CoreShopping.Web.Tests
         }
         #endregion
 
+        #region GenerateRecoveryCodesWarning() method tests
+        [Test]
+        public async Task GetGenerateRecoveryCodesWarning_ReturnsViewGenerateRecoveryCodes_WhenUserHasTwoFactorEnabled()
+        {
+            var user = CreateApplicationUser();
+            user.TwoFactorEnabled = true;
+            var userManager = CreateUserManagerMock();
+            userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
+                .Returns(Task.FromResult(user));
+
+            var signInManager = CreateSignInManagerMock(userManager);
+            var controller = CreateControllerInstance(signInManager);
+
+            var result = await controller.GenerateRecoveryCodesWarning();
+
+            Assert.That(result, Is.InstanceOf<ViewResult>());
+            Assert.That((result as ViewResult).ViewName, Is.EqualTo(nameof(ManageController.GenerateRecoveryCodes)));
+        }
+
+        [Test]
+        public void GetGenerateRecoveryCodesWarning_ThrowsAnApplicationException_WhenUserDoesNotExist()
+        {
+            var userManager = CreateUserManagerMock();
+            userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
+                .Returns(Task.FromResult((ApplicationUser)null));
+
+            var signInManager = CreateSignInManagerMock(userManager);
+            var controller = CreateControllerInstance(signInManager);
+
+            async Task Act()
+            {
+                var result = await controller.GenerateRecoveryCodesWarning();
+            }
+
+            var ex = Assert.ThrowsAsync<ApplicationException>(Act);
+            Assert.That(ex.Message, Does.StartWith("Unable to load user with ID"));
+        }
+
+        [Test]
+        public void GetGenerateRecoveryCodesWarning_ThrowsAnApplicationException_WhenUserDoesNotHaveTwoFactorEnabled()
+        {
+            var userManager = CreateUserManagerMock();
+            userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
+                .Returns(Task.FromResult(CreateApplicationUser()));
+
+            var signInManager = CreateSignInManagerMock(userManager);
+            var controller = CreateControllerInstance(signInManager);
+
+            async Task Act()
+            {
+                var result = await controller.GenerateRecoveryCodesWarning();
+            }
+
+            var ex = Assert.ThrowsAsync<ApplicationException>(Act);
+            Assert.That(ex.Message, Does.StartWith("Cannot generate recovery codes for user with ID"));
+        }
+        #endregion
+
         private ApplicationUser CreateApplicationUser() =>
             new ApplicationUser
             {
