@@ -1166,6 +1166,22 @@ namespace nikstra.CoreShopping.Web.Tests
         }
         #endregion
 
+        #region ResetAuthenticatorWarning() method tests
+        [Test]
+        public void GetResetAuthenticatorWarning_ReturnsViewResetAuthenticator_WhenCalled()
+        {
+            var userManager = CreateUserManagerMock();
+
+            var signInManager = CreateSignInManagerMock(userManager);
+            var controller = CreateControllerInstance(signInManager);
+
+            var result = controller.ResetAuthenticatorWarning();
+
+            Assert.That(result, Is.InstanceOf<ViewResult>());
+            Assert.That((result as ViewResult).ViewName, Is.EqualTo(nameof(ManageController.ResetAuthenticator)));
+        }
+        #endregion
+
         private ApplicationUser CreateApplicationUser() =>
             new ApplicationUser
             {
