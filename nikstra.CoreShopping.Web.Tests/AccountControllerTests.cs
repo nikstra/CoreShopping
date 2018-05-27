@@ -25,11 +25,11 @@ namespace nikstra.CoreShopping.Web.Tests
     {
         #region Login tests
         [Test]
-        public void Login_ShouldHaveHttpGetAttribute_WhenParameterIsString()
+        public void Get_Login_ShouldHaveHttpGetAttribute()
         {
             // Arrange
             var type = typeof(AccountController);
-            var method = type.GetMethod(nameof(AccountController.Login), new [] { typeof(string) });
+            var method = type.GetMethod(nameof(AccountController.Login), new[] { typeof(string) });
             var attributes = method.GetCustomAttributes(false);
             var wantedAttributeType = typeof(HttpGetAttribute);
 
@@ -41,7 +41,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
 
         [Test]
-        public void Login_HaveAllowAnonymousAttribute_WhenParameterIsString()
+        public void Get_Login_ShouldHaveAllowAnonymousAttribute()
         {
             // Arrange
             var type = typeof(AccountController);
@@ -57,7 +57,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
 
         [Test]
-        public async Task Login_ReturnsView_WhenCalled()
+        public async Task Get_Login_ReturnsView_WhenCalled()
         {
             // Arrange
             var userManager = CreateUserManagerMock();
@@ -78,7 +78,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
 
         [Test]
-        public void Login_HaveHttpPostAttribute_WhenParametersAreLoginViewModelAndString()
+        public void Post_Login_ShouldHaveHttpPostAttribute()
         {
             // Arrange
             var type = typeof(AccountController);
@@ -94,7 +94,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
 
         [Test]
-        public void Login_HaveAllowAnonymousAttribute_WhenParametersAreLoginViewModelAndString()
+        public void Post_Login_ShouldHaveAllowAnonymousAttribute()
         {
             // Arrange
             var type = typeof(AccountController);
@@ -110,7 +110,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
 
         [Test]
-        public async Task Login_RedirectsToReturnUrl_WhenLoginIsSuccessful()
+        public async Task Post_Login_RedirectsToReturnUrl_WhenLoginIsSuccessful()
         {
             // Arrange
             var userManager = CreateUserManagerMock();
@@ -141,7 +141,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
 
         [Test]
-        public async Task Login_RedirectsToLoginWith2fa_WhenTwoFactorIsRequired()
+        public async Task Post_Login_RedirectsToLoginWith2fa_WhenTwoFactorIsRequired()
         {
             // Arrange
             var userManager = CreateUserManagerMock();
@@ -170,7 +170,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
 
         [Test]
-        public async Task Login_RedirectsToLockout_WhenAccountIsLockedOut()
+        public async Task Post_Login_RedirectsToLockout_WhenAccountIsLockedOut()
         {
             // Arrange
             var userManager = CreateUserManagerMock();
@@ -199,7 +199,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
 
         [Test]
-        public async Task Login_AddModelErrorAndReturnsViewAndModel_WhenLoginAttemptIsInvalid()
+        public async Task Post_Login_AddModelErrorAndReturnsViewAndModel_WhenLoginAttemptIsInvalid()
         {
             // Arrange
             var userManager = CreateUserManagerMock();
@@ -229,7 +229,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
 
         [Test]
-        public async Task Login_ReturnsViewAndModel_WhenModelStateIsInvalid()
+        public async Task Post_Login_ReturnsViewAndModel_WhenModelStateIsInvalid()
         {
             // Arrange
             var userManager = CreateUserManagerMock();
