@@ -741,6 +741,56 @@ namespace nikstra.CoreShopping.Web.Tests
         }
         #endregion
 
+        #region Lockout tests
+        [Test]
+        public void Get_Lockout_ShouldHaveHttpGetAttribute()
+        {
+            // Arrange
+            var type = typeof(AccountController);
+            var method = type.GetMethod(nameof(AccountController.Lockout));
+            var attributes = method.GetCustomAttributes(false);
+            var wantedAttributeType = typeof(HttpGetAttribute);
+
+            // Act
+            var result = attributes.FirstOrDefault(a => a.GetType() == wantedAttributeType);
+
+            // Assert
+            Assert.That(result, Is.Not.Null, $"No {wantedAttributeType.Name} found.");
+        }
+
+        [Test]
+        public void Get_Lockout_ShouldHaveAllowAnonymousAttribute()
+        {
+            // Arrange
+            var type = typeof(AccountController);
+            var method = type.GetMethod(nameof(AccountController.Lockout));
+            var attributes = method.GetCustomAttributes(false);
+            var wantedAttributeType = typeof(AllowAnonymousAttribute);
+
+            // Act
+            var result = attributes.FirstOrDefault(a => a.GetType() == wantedAttributeType);
+
+            // Assert
+            Assert.That(result, Is.Not.Null, $"No {wantedAttributeType.Name} found.");
+        }
+
+        [Test]
+        public void Get_Lockout_ReturnsView_WhenCalled()
+        {
+            // Arrange
+            var userManager = CreateUserManagerMock();
+            var signInManager = CreateSignInManagerMock(userManager);
+
+            var controller = CreateControllerInstance(signInManager);
+
+            // Act
+            var result = controller.Lockout();
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<ViewResult>());
+        }
+        #endregion
+
         private ApplicationUser CreateApplicationUser() =>
             new ApplicationUser
             {
