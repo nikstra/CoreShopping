@@ -507,6 +507,240 @@ namespace nikstra.CoreShopping.Web.Tests
         }
         #endregion
 
+        #region LoginWithRecoveryCode tests
+        [Test]
+        public void Get_LoginWithRecoveryCode_ShouldHaveHttpGetAttribute()
+        {
+            // Arrange
+            var type = typeof(AccountController);
+            var method = type.GetMethod(nameof(AccountController.LoginWithRecoveryCode), new[] { typeof(string) });
+            var attributes = method.GetCustomAttributes(false);
+            var wantedAttributeType = typeof(HttpGetAttribute);
+
+            // Act
+            var result = attributes.FirstOrDefault(a => a.GetType() == wantedAttributeType);
+
+            // Assert
+            Assert.That(result, Is.Not.Null, $"No {wantedAttributeType.Name} found.");
+        }
+
+        [Test]
+        public void Get_LoginWithRecoveryCode_ShouldHaveAllowAnonymousAttribute()
+        {
+            // Arrange
+            var type = typeof(AccountController);
+            var method = type.GetMethod(nameof(AccountController.LoginWithRecoveryCode), new[] { typeof(string) });
+            var attributes = method.GetCustomAttributes(false);
+            var wantedAttributeType = typeof(AllowAnonymousAttribute);
+
+            // Act
+            var result = attributes.FirstOrDefault(a => a.GetType() == wantedAttributeType);
+
+            // Assert
+            Assert.That(result, Is.Not.Null, $"No {wantedAttributeType.Name} found.");
+        }
+
+        [Test]
+        public async Task Get_LoginWithRecoveryCode_ReturnsView_WhenUserWithTwoFactorAuthExists()
+        {
+            // Arrange
+            var userManager = CreateUserManagerMock();
+            var signInManager = CreateSignInManagerMock(userManager);
+            signInManager.GetTwoFactorAuthenticationUserAsync()
+                .Returns(Task.FromResult(CreateApplicationUser()));
+
+            var controller = CreateControllerInstance(signInManager);
+
+            // Act
+            var result = await controller.LoginWithRecoveryCode("url");
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<ViewResult>());
+            Assert.That((result as ViewResult).ViewData["ReturnUrl"], Is.EqualTo("url"));
+        }
+
+        [Test]
+        public void Get_LoginWithRecoveryCode_ThrowsApplicationException_WhenUserWithTwoFactorAuthCanNotBeLoaded()
+        {
+            // Arrange
+            var userManager = CreateUserManagerMock();
+            var signInManager = CreateSignInManagerMock(userManager);
+            signInManager.GetTwoFactorAuthenticationUserAsync()
+                .Returns(Task.FromResult((ApplicationUser)null));
+
+            var controller = CreateControllerInstance(signInManager);
+
+            // Act
+            async Task Act()
+            {
+                var result = await controller.LoginWithRecoveryCode("url");
+            }
+
+            // Assert
+            var ex = Assert.ThrowsAsync<ApplicationException>(Act);
+            Assert.That(ex.Message, Does.StartWith("Unable to load two-factor authentication user."));
+        }
+
+        [Test]
+        public void Post_LoginWithRecoveryCode_ShouldHaveHttpPostAttribute()
+        {
+            // Arrange
+            var type = typeof(AccountController);
+            var method = type.GetMethod(nameof(AccountController.LoginWithRecoveryCode),
+                new[] { typeof(LoginWithRecoveryCodeViewModel), typeof(string) });
+            var attributes = method.GetCustomAttributes(false);
+            var wantedAttributeType = typeof(HttpPostAttribute);
+
+            // Act
+            var result = attributes.FirstOrDefault(a => a.GetType() == wantedAttributeType);
+
+            // Assert
+            Assert.That(result, Is.Not.Null, $"No {wantedAttributeType.Name} found.");
+        }
+
+        [Test]
+        public void Post_LoginWithRecoveryCode_ShouldHaveAllowAnonymousAttribute()
+        {
+            // Arrange
+            var type = typeof(AccountController);
+            var method = type.GetMethod(nameof(AccountController.LoginWithRecoveryCode),
+                new[] { typeof(LoginWithRecoveryCodeViewModel), typeof(string) });
+            var attributes = method.GetCustomAttributes(false);
+            var wantedAttributeType = typeof(AllowAnonymousAttribute);
+
+            // Act
+            var result = attributes.FirstOrDefault(a => a.GetType() == wantedAttributeType);
+
+            // Assert
+            Assert.That(result, Is.Not.Null, $"No {wantedAttributeType.Name} found.");
+        }
+
+        [Test]
+        public async Task Post_LoginWithRecoveryCode_RedirectsToReturnUrl_WhenLoginWithRecoveryCodeIsSuccessful()
+        {
+            // Arrange
+            var userManager = CreateUserManagerMock();
+            var signInManager = CreateSignInManagerMock(userManager);
+            signInManager.GetTwoFactorAuthenticationUserAsync()
+                .Returns(Task.FromResult(CreateApplicationUser()));
+            signInManager.TwoFactorRecoveryCodeSignInAsync(Arg.Any<string>())
+                .Returns(Task.FromResult(Microsoft.AspNetCore.Identity.SignInResult.Success));
+
+            var controller = CreateControllerInstance(signInManager);
+            controller.Url = Substitute.For<IUrlHelper>();
+            controller.Url.IsLocalUrl(Arg.Any<string>()).Returns(true);
+
+            var model = new LoginWithRecoveryCodeViewModel
+            {
+                RecoveryCode = "code"
+            };
+
+            // Act
+            var result = await controller.LoginWithRecoveryCode(model, "url");
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<RedirectResult>());
+            Assert.That((result as RedirectResult).Url, Is.EqualTo("url"));
+        }
+
+        [Test]
+        public async Task Post_LoginWithRecoveryCode_ReturnsViewAndModel_WhenModelStateIsNotValid()
+        {
+            // Arrange
+            var userManager = CreateUserManagerMock();
+            var signInManager = CreateSignInManagerMock(userManager);
+
+            var controller = CreateControllerInstance(signInManager);
+            controller.ModelState.AddModelError("", "");
+
+            var model = new LoginWithRecoveryCodeViewModel();
+
+            // Act
+            var result = await controller.LoginWithRecoveryCode(model, "url");
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<ViewResult>());
+            Assert.That((result as ViewResult).Model, Is.InstanceOf<LoginWithRecoveryCodeViewModel>());
+            Assert.That((result as ViewResult).Model, Is.EqualTo(model));
+        }
+
+        [Test]
+        public async Task Post_LoginWithRecoveryCode_RedirectsToLockout_WhenAccountIsLockedOut()
+        {
+            // Arrange
+            var userManager = CreateUserManagerMock();
+            var signInManager = CreateSignInManagerMock(userManager);
+            signInManager.GetTwoFactorAuthenticationUserAsync()
+                .Returns(Task.FromResult(CreateApplicationUser()));
+            signInManager.TwoFactorRecoveryCodeSignInAsync(Arg.Any<string>())
+                .Returns(Task.FromResult(Microsoft.AspNetCore.Identity.SignInResult.LockedOut));
+
+            var controller = CreateControllerInstance(signInManager);
+
+            var model = new LoginWithRecoveryCodeViewModel
+            {
+                RecoveryCode = "code"
+            };
+
+            // Act
+            var result = await controller.LoginWithRecoveryCode(model, "url");
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<RedirectToActionResult>());
+            Assert.That((result as RedirectToActionResult).ActionName, Is.EqualTo(nameof(AccountController.Lockout)));
+        }
+
+        [Test]
+        public async Task Post_LoginWithRecoveryCode_AddModelErrorAndReturnsView_WhenRecoveryCodeIsInvalid()
+        {
+            // Arrange
+            var userManager = CreateUserManagerMock();
+            var signInManager = CreateSignInManagerMock(userManager);
+            signInManager.GetTwoFactorAuthenticationUserAsync()
+                .Returns(Task.FromResult(CreateApplicationUser()));
+            signInManager.TwoFactorRecoveryCodeSignInAsync(Arg.Any<string>())
+                .Returns(Task.FromResult(Microsoft.AspNetCore.Identity.SignInResult.Failed));
+
+            var controller = CreateControllerInstance(signInManager);
+
+            var model = new LoginWithRecoveryCodeViewModel
+            {
+                RecoveryCode = "code"
+            };
+
+            // Act
+            var result = await controller.LoginWithRecoveryCode(model, "url");
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<ViewResult>());
+            Assert.That((result as ViewResult).ViewData.ModelState.Count, Is.GreaterThan(0));
+        }
+
+        [Test]
+        public void Post_LoginWithRecoveryCode_ThrowsApplicationException_WhenUserWithTwoFactorAuthCanNotBeLoaded()
+        {
+            // Arrange
+            var userManager = CreateUserManagerMock();
+            var signInManager = CreateSignInManagerMock(userManager);
+            signInManager.GetTwoFactorAuthenticationUserAsync()
+                .Returns(Task.FromResult((ApplicationUser)null));
+
+            var controller = CreateControllerInstance(signInManager);
+
+            var model = new LoginWithRecoveryCodeViewModel();
+
+            // Act
+            async Task Act()
+            {
+                var result = await controller.LoginWithRecoveryCode(model, "url");
+            }
+
+            // Assert
+            var ex = Assert.ThrowsAsync<ApplicationException>(Act);
+            Assert.That(ex.Message, Does.StartWith("Unable to load two-factor authentication user."));
+        }
+        #endregion
+
         private ApplicationUser CreateApplicationUser() =>
             new ApplicationUser
             {
