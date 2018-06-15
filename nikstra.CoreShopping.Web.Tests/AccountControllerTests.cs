@@ -994,5 +994,61 @@ namespace nikstra.CoreShopping.Web.Tests
             Assert.That((result as RedirectToActionResult).ActionName, Is.EqualTo(nameof(HomeController.Index)));
         }
         #endregion
+
+        #region ExternalLogin tests
+        [Test]
+        public void Post_ExternalLogin_ShouldHaveHttpPostAttribute()
+        {
+            // Arrange
+            var type = typeof(AccountController);
+            var method = type.GetMethod(nameof(AccountController.ExternalLogin),
+                new[] { typeof(string), typeof(string) });
+            var attributes = method.GetCustomAttributes(false);
+            var wantedAttributeType = typeof(HttpPostAttribute);
+
+            // Act
+            var result = attributes.FirstOrDefault(a => a.GetType() == wantedAttributeType);
+
+            // Assert
+            Assert.That(result, Is.Not.Null, $"No {wantedAttributeType.Name} found.");
+        }
+
+        [Test]
+        public void Post_ExternalLogin_ShouldHaveAllowAnonymousAttribute()
+        {
+            // Arrange
+            var type = typeof(AccountController);
+            var method = type.GetMethod(nameof(AccountController.ExternalLogin),
+                new[] { typeof(string), typeof(string) });
+            var attributes = method.GetCustomAttributes(false);
+            var wantedAttributeType = typeof(AllowAnonymousAttribute);
+
+            // Act
+            var result = attributes.FirstOrDefault(a => a.GetType() == wantedAttributeType);
+
+            // Assert
+            Assert.That(result, Is.Not.Null, $"No {wantedAttributeType.Name} found.");
+        }
+
+        [Test]
+        public void Post_ExternalLogin_RedirectsToExternalProvider_WhenCalled()
+        {
+            // Arrange
+            var userManager = CreateUserManagerStub();
+            var signInManager = CreateSignInManagerStub(userManager);
+            signInManager.ConfigureExternalAuthenticationProperties(Arg.Any<string>(), Arg.Any<string>())
+                .Returns(new AuthenticationProperties { RedirectUri = "url" });
+
+            var controller = CreateControllerInstance(signInManager);
+            InjectControllerContextStub(controller, nameof(AccountController.Register));
+
+            // Act
+            var result = controller.ExternalLogin("provider", "url");
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<ChallengeResult>());
+            Assert.That((result as ChallengeResult).Properties.RedirectUri, Is.EqualTo("url"));
+        }
+        #endregion
     }
 }
