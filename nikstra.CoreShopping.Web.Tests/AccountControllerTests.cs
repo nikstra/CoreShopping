@@ -956,5 +956,43 @@ namespace nikstra.CoreShopping.Web.Tests
             Assert.That((result as ViewResult).Model, Is.InstanceOf<RegisterViewModel>());
         }
         #endregion
+
+        #region Logout tests
+        [Test]
+        public void Post_Logout_ShouldHaveHttpPostAttribute()
+        {
+            // Arrange
+            var type = typeof(AccountController);
+            var method = type.GetMethod(nameof(AccountController.Logout));
+            var attributes = method.GetCustomAttributes(false);
+            var wantedAttributeType = typeof(HttpPostAttribute);
+
+            // Act
+            var result = attributes.FirstOrDefault(a => a.GetType() == wantedAttributeType);
+
+            // Assert
+            Assert.That(result, Is.Not.Null, $"No {wantedAttributeType.Name} found.");
+        }
+
+        [Test]
+        public async Task Post_Logout_RedirectsToHomeIndex_WhenUserLogsOut()
+        {
+            // Arrange
+            var userManager = CreateUserManagerStub();
+            var signInManager = CreateSignInManagerStub(userManager);
+            signInManager.SignOutAsync()
+                .Returns(Task.FromResult(0));
+
+            var controller = CreateControllerInstance(signInManager);
+
+            // Act
+            var result = await controller.Logout();
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<RedirectToActionResult>());
+            Assert.That((result as RedirectToActionResult).ControllerName, Is.EqualTo(nameof(HomeController).Replace("Controller", "")));
+            Assert.That((result as RedirectToActionResult).ActionName, Is.EqualTo(nameof(HomeController.Index)));
+        }
+        #endregion
     }
 }
