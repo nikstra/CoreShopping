@@ -796,5 +796,165 @@ namespace nikstra.CoreShopping.Web.Tests
             Assert.That(result, Is.InstanceOf<ViewResult>());
         }
         #endregion
+
+        #region Register tests
+        [Test]
+        public void Get_Register_ShouldHaveHttpGetAttribute()
+        {
+            // Arrange
+            var type = typeof(AccountController);
+            var method = type.GetMethod(nameof(AccountController.Register), new[] { typeof(string) });
+            var attributes = method.GetCustomAttributes(false);
+            var wantedAttributeType = typeof(HttpGetAttribute);
+
+            // Act
+            var result = attributes.FirstOrDefault(a => a.GetType() == wantedAttributeType);
+
+            // Assert
+            Assert.That(result, Is.Not.Null, $"No {wantedAttributeType.Name} found.");
+        }
+
+        [Test]
+        public void Get_Register_ShouldHaveAllowAnonymousAttribute()
+        {
+            // Arrange
+            var type = typeof(AccountController);
+            var method = type.GetMethod(nameof(AccountController.Register), new[] { typeof(string) });
+            var attributes = method.GetCustomAttributes(false);
+            var wantedAttributeType = typeof(AllowAnonymousAttribute);
+
+            // Act
+            var result = attributes.FirstOrDefault(a => a.GetType() == wantedAttributeType);
+
+            // Assert
+            Assert.That(result, Is.Not.Null, $"No {wantedAttributeType.Name} found.");
+        }
+
+        [Test]
+        public void Get_Register_ReturnsView_WhenCalled()
+        {
+            // Arrange
+            var userManager = CreateUserManagerStub();
+            var signInManager = CreateSignInManagerStub(userManager);
+
+            var controller = CreateControllerInstance(signInManager);
+
+            // Act
+            var result = controller.Register("url");
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<ViewResult>());
+            Assert.That((result as ViewResult).ViewData["ReturnUrl"], Is.EqualTo("url"));
+        }
+
+        [Test]
+        public void Post_Register_ShouldHaveHttpPostAttribute()
+        {
+            // Arrange
+            var type = typeof(AccountController);
+            var method = type.GetMethod(nameof(AccountController.Register),
+                new[] { typeof(RegisterViewModel), typeof(string) });
+            var attributes = method.GetCustomAttributes(false);
+            var wantedAttributeType = typeof(HttpPostAttribute);
+
+            // Act
+            var result = attributes.FirstOrDefault(a => a.GetType() == wantedAttributeType);
+
+            // Assert
+            Assert.That(result, Is.Not.Null, $"No {wantedAttributeType.Name} found.");
+        }
+
+        [Test]
+        public void Post_Register_ShouldHaveAllowAnonymousAttribute()
+        {
+            // Arrange
+            var type = typeof(AccountController);
+            var method = type.GetMethod(nameof(AccountController.Register),
+                new[] { typeof(RegisterViewModel), typeof(string) });
+            var attributes = method.GetCustomAttributes(false);
+            var wantedAttributeType = typeof(AllowAnonymousAttribute);
+
+            // Act
+            var result = attributes.FirstOrDefault(a => a.GetType() == wantedAttributeType);
+
+            // Assert
+            Assert.That(result, Is.Not.Null, $"No {wantedAttributeType.Name} found.");
+        }
+
+        [Test]
+        public async Task Post_Register_RedirectsToReturnUrl_WhenUserSuccessfullyRegisters()
+        {
+            // Arrange
+            var userManager = CreateUserManagerStub();
+            userManager.CreateAsync(Arg.Any<ApplicationUser>(), Arg.Any<string>())
+                .Returns(Task.FromResult(IdentityResult.Success));
+            userManager.GenerateEmailConfirmationTokenAsync(Arg.Any<ApplicationUser>())
+                .Returns(Task.FromResult("code"));
+            var signInManager = CreateSignInManagerStub(userManager);
+            signInManager.SignInAsync(Arg.Any<ApplicationUser>(), Arg.Any<bool>())
+                .Returns(Task.FromResult(0));
+
+            var controller = CreateControllerInstance(signInManager);
+            InjectControllerContextStub(controller, nameof(AccountController.Register));
+
+            var model = new RegisterViewModel
+            {
+                Email = "user@domain.tld",
+                Password = "password",
+                ConfirmPassword = "password"
+            };
+
+            // Act
+            var result = await controller.Register(model, "url");
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<RedirectResult>());
+            Assert.That((result as RedirectResult).Url, Is.EqualTo("url"));
+        }
+
+        [Test]
+        public async Task Post_Register_AddModelErrorAndReturnsView_WhenCreateUserFails()
+        {
+            // Arrange
+            var userManager = CreateUserManagerStub();
+            userManager.CreateAsync(Arg.Any<ApplicationUser>(), Arg.Any<string>())
+                .Returns(Task.FromResult(IdentityResult.Failed(
+                    new IdentityError { Code = "code", Description = "description" })));
+
+            var signInManager = CreateSignInManagerStub(userManager);
+
+            var controller = CreateControllerInstance(signInManager);
+
+            var model = new RegisterViewModel();
+
+            // Act
+            var result = await controller.Register(model, "url");
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<ViewResult>());
+            Assert.That((result as ViewResult).Model, Is.InstanceOf<RegisterViewModel>());
+            Assert.That(controller.ModelState.ErrorCount, Is.GreaterThan(0));
+        }
+
+        [Test]
+        public async Task Post_Register_ReturnsViewAndModel_WhenModelStateIsNotValid()
+        {
+            // Arrange
+            var userManager = CreateUserManagerStub();
+            var signInManager = CreateSignInManagerStub(userManager);
+
+            var controller = CreateControllerInstance(signInManager);
+            controller.ModelState.AddModelError("", "");
+
+            var model = new RegisterViewModel();
+
+            // Act
+            var result = await controller.Register(model, "url");
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<ViewResult>());
+            Assert.That((result as ViewResult).Model, Is.InstanceOf<RegisterViewModel>());
+        }
+        #endregion
     }
 }
