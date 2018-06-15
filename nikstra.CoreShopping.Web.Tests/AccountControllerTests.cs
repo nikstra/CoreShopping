@@ -3,9 +3,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using nikstra.CoreShopping.Web.Controllers;
 using nikstra.CoreShopping.Web.Models;
 using nikstra.CoreShopping.Web.Models.AccountViewModels;
@@ -13,16 +13,22 @@ using nikstra.CoreShopping.Web.Services;
 using NSubstitute;
 using NUnit.Framework;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace nikstra.CoreShopping.Web.Tests
 {
     [TestFixture, SetCulture("en-US")]
-    class AccountControllerTests
+    class AccountControllerTests : ControllerTestBase
     {
+        private AccountController CreateControllerInstance(SignInManager<ApplicationUser> signInManager) =>
+            new AccountController(
+                signInManager.UserManager,
+                signInManager,
+                Substitute.For<IEmailSender>(),
+                Substitute.For<ILogger<AccountController>>()
+                );
+
         #region Login tests
         [Test]
         public void Get_Login_ShouldHaveHttpGetAttribute()
@@ -60,8 +66,8 @@ namespace nikstra.CoreShopping.Web.Tests
         public async Task Get_Login_ReturnsView_WhenCalled()
         {
             // Arrange
-            var userManager = CreateUserManagerMock();
-            var signInManager = CreateSignInManagerMock(userManager);
+            var userManager = CreateUserManagerStub();
+            var signInManager = CreateSignInManagerStub(userManager);
             var controller = CreateControllerInstance(signInManager);
             controller.ControllerContext.HttpContext = new DefaultHttpContext();
             controller.TempData = new TempDataDictionary(controller.HttpContext, Substitute.For<ITempDataProvider>());
@@ -113,8 +119,8 @@ namespace nikstra.CoreShopping.Web.Tests
         public async Task Post_Login_RedirectsToReturnUrl_WhenLoginIsSuccessful()
         {
             // Arrange
-            var userManager = CreateUserManagerMock();
-            var signInManager = CreateSignInManagerMock(userManager);
+            var userManager = CreateUserManagerStub();
+            var signInManager = CreateSignInManagerStub(userManager);
             signInManager.PasswordSignInAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<bool>())
                 .Returns(Task.FromResult(Microsoft.AspNetCore.Identity.SignInResult.Success));
 
@@ -144,8 +150,8 @@ namespace nikstra.CoreShopping.Web.Tests
         public async Task Post_Login_RedirectsToLoginWith2fa_WhenTwoFactorIsRequired()
         {
             // Arrange
-            var userManager = CreateUserManagerMock();
-            var signInManager = CreateSignInManagerMock(userManager);
+            var userManager = CreateUserManagerStub();
+            var signInManager = CreateSignInManagerStub(userManager);
             signInManager.PasswordSignInAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<bool>())
                 .Returns(Task.FromResult(Microsoft.AspNetCore.Identity.SignInResult.TwoFactorRequired));
 
@@ -173,8 +179,8 @@ namespace nikstra.CoreShopping.Web.Tests
         public async Task Post_Login_RedirectsToLockout_WhenAccountIsLockedOut()
         {
             // Arrange
-            var userManager = CreateUserManagerMock();
-            var signInManager = CreateSignInManagerMock(userManager);
+            var userManager = CreateUserManagerStub();
+            var signInManager = CreateSignInManagerStub(userManager);
             signInManager.PasswordSignInAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<bool>())
                 .Returns(Task.FromResult(Microsoft.AspNetCore.Identity.SignInResult.LockedOut));
 
@@ -202,8 +208,8 @@ namespace nikstra.CoreShopping.Web.Tests
         public async Task Post_Login_AddModelErrorAndReturnsViewAndModel_WhenLoginAttemptIsInvalid()
         {
             // Arrange
-            var userManager = CreateUserManagerMock();
-            var signInManager = CreateSignInManagerMock(userManager);
+            var userManager = CreateUserManagerStub();
+            var signInManager = CreateSignInManagerStub(userManager);
             signInManager.PasswordSignInAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<bool>())
                 .Returns(Task.FromResult(Microsoft.AspNetCore.Identity.SignInResult.Failed));
 
@@ -232,8 +238,8 @@ namespace nikstra.CoreShopping.Web.Tests
         public async Task Post_Login_ReturnsViewAndModel_WhenModelStateIsInvalid()
         {
             // Arrange
-            var userManager = CreateUserManagerMock();
-            var signInManager = CreateSignInManagerMock(userManager);
+            var userManager = CreateUserManagerStub();
+            var signInManager = CreateSignInManagerStub(userManager);
             signInManager.PasswordSignInAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<bool>())
                 .Returns(Task.FromResult(Microsoft.AspNetCore.Identity.SignInResult.Failed));
 
@@ -297,10 +303,10 @@ namespace nikstra.CoreShopping.Web.Tests
         public async Task Get_LoginWith2fa_ReturnsViewAndModel_WhenUserWithTwoFactorAuthExists()
         {
             // Arrange
-            var userManager = CreateUserManagerMock();
-            var signInManager = CreateSignInManagerMock(userManager);
+            var userManager = CreateUserManagerStub();
+            var signInManager = CreateSignInManagerStub(userManager);
             signInManager.GetTwoFactorAuthenticationUserAsync()
-                .Returns(Task.FromResult(CreateApplicationUser()));
+                .Returns(Task.FromResult(CreateGoodApplicationUser()));
 
             var controller = CreateControllerInstance(signInManager);
 
@@ -318,8 +324,8 @@ namespace nikstra.CoreShopping.Web.Tests
         public void Get_LoginWith2fa_ThrowsApplicationException_WhenUserWithTwoFactorAuthCanNotBeLoaded()
         {
             // Arrange
-            var userManager = CreateUserManagerMock();
-            var signInManager = CreateSignInManagerMock(userManager);
+            var userManager = CreateUserManagerStub();
+            var signInManager = CreateSignInManagerStub(userManager);
             signInManager.GetTwoFactorAuthenticationUserAsync()
                 .Returns(Task.FromResult((ApplicationUser)null));
 
@@ -374,10 +380,10 @@ namespace nikstra.CoreShopping.Web.Tests
         public async Task Post_LoginWith2fa_RedirectsToReturnUrl_WhenTwoFactorLoginIsSuccessful()
         {
             // Arrange
-            var userManager = CreateUserManagerMock();
-            var signInManager = CreateSignInManagerMock(userManager);
+            var userManager = CreateUserManagerStub();
+            var signInManager = CreateSignInManagerStub(userManager);
             signInManager.GetTwoFactorAuthenticationUserAsync()
-                .Returns(Task.FromResult(CreateApplicationUser()));
+                .Returns(Task.FromResult(CreateGoodApplicationUser()));
             signInManager.TwoFactorAuthenticatorSignInAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<bool>())
                 .Returns(Task.FromResult(Microsoft.AspNetCore.Identity.SignInResult.Success));
 
@@ -404,8 +410,8 @@ namespace nikstra.CoreShopping.Web.Tests
         public async Task Post_LoginWith2fa_ReturnsViewAndModel_WhenModelStateIsNotValid()
         {
             // Arrange
-            var userManager = CreateUserManagerMock();
-            var signInManager = CreateSignInManagerMock(userManager);
+            var userManager = CreateUserManagerStub();
+            var signInManager = CreateSignInManagerStub(userManager);
 
             var controller = CreateControllerInstance(signInManager);
             controller.ModelState.AddModelError("", "");
@@ -430,10 +436,10 @@ namespace nikstra.CoreShopping.Web.Tests
         public async Task Post_LoginWith2fa_RedirectsToLockout_WhenAccountIsLockedOut()
         {
             // Arrange
-            var userManager = CreateUserManagerMock();
-            var signInManager = CreateSignInManagerMock(userManager);
+            var userManager = CreateUserManagerStub();
+            var signInManager = CreateSignInManagerStub(userManager);
             signInManager.GetTwoFactorAuthenticationUserAsync()
-                .Returns(Task.FromResult(CreateApplicationUser()));
+                .Returns(Task.FromResult(CreateGoodApplicationUser()));
             signInManager.TwoFactorAuthenticatorSignInAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<bool>())
                 .Returns(Task.FromResult(Microsoft.AspNetCore.Identity.SignInResult.LockedOut));
 
@@ -458,10 +464,10 @@ namespace nikstra.CoreShopping.Web.Tests
         public async Task Post_LoginWith2fa_AddModelErrorAndReturnsView_WhenAuthenticatorCodeIsInvalid()
         {
             // Arrange
-            var userManager = CreateUserManagerMock();
-            var signInManager = CreateSignInManagerMock(userManager);
+            var userManager = CreateUserManagerStub();
+            var signInManager = CreateSignInManagerStub(userManager);
             signInManager.GetTwoFactorAuthenticationUserAsync()
-                .Returns(Task.FromResult(CreateApplicationUser()));
+                .Returns(Task.FromResult(CreateGoodApplicationUser()));
             signInManager.TwoFactorAuthenticatorSignInAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<bool>())
                 .Returns(Task.FromResult(Microsoft.AspNetCore.Identity.SignInResult.Failed));
 
@@ -486,8 +492,8 @@ namespace nikstra.CoreShopping.Web.Tests
         public void Post_LoginWith2fa_ThrowsApplicationException_WhenUserWithTwoFactorAuthCanNotBeLoaded()
         {
             // Arrange
-            var userManager = CreateUserManagerMock();
-            var signInManager = CreateSignInManagerMock(userManager);
+            var userManager = CreateUserManagerStub();
+            var signInManager = CreateSignInManagerStub(userManager);
             signInManager.GetTwoFactorAuthenticationUserAsync()
                 .Returns(Task.FromResult((ApplicationUser)null));
 
@@ -544,10 +550,10 @@ namespace nikstra.CoreShopping.Web.Tests
         public async Task Get_LoginWithRecoveryCode_ReturnsView_WhenUserWithTwoFactorAuthExists()
         {
             // Arrange
-            var userManager = CreateUserManagerMock();
-            var signInManager = CreateSignInManagerMock(userManager);
+            var userManager = CreateUserManagerStub();
+            var signInManager = CreateSignInManagerStub(userManager);
             signInManager.GetTwoFactorAuthenticationUserAsync()
-                .Returns(Task.FromResult(CreateApplicationUser()));
+                .Returns(Task.FromResult(CreateGoodApplicationUser()));
 
             var controller = CreateControllerInstance(signInManager);
 
@@ -563,8 +569,8 @@ namespace nikstra.CoreShopping.Web.Tests
         public void Get_LoginWithRecoveryCode_ThrowsApplicationException_WhenUserWithTwoFactorAuthCanNotBeLoaded()
         {
             // Arrange
-            var userManager = CreateUserManagerMock();
-            var signInManager = CreateSignInManagerMock(userManager);
+            var userManager = CreateUserManagerStub();
+            var signInManager = CreateSignInManagerStub(userManager);
             signInManager.GetTwoFactorAuthenticationUserAsync()
                 .Returns(Task.FromResult((ApplicationUser)null));
 
@@ -619,10 +625,10 @@ namespace nikstra.CoreShopping.Web.Tests
         public async Task Post_LoginWithRecoveryCode_RedirectsToReturnUrl_WhenLoginWithRecoveryCodeIsSuccessful()
         {
             // Arrange
-            var userManager = CreateUserManagerMock();
-            var signInManager = CreateSignInManagerMock(userManager);
+            var userManager = CreateUserManagerStub();
+            var signInManager = CreateSignInManagerStub(userManager);
             signInManager.GetTwoFactorAuthenticationUserAsync()
-                .Returns(Task.FromResult(CreateApplicationUser()));
+                .Returns(Task.FromResult(CreateGoodApplicationUser()));
             signInManager.TwoFactorRecoveryCodeSignInAsync(Arg.Any<string>())
                 .Returns(Task.FromResult(Microsoft.AspNetCore.Identity.SignInResult.Success));
 
@@ -647,8 +653,8 @@ namespace nikstra.CoreShopping.Web.Tests
         public async Task Post_LoginWithRecoveryCode_ReturnsViewAndModel_WhenModelStateIsNotValid()
         {
             // Arrange
-            var userManager = CreateUserManagerMock();
-            var signInManager = CreateSignInManagerMock(userManager);
+            var userManager = CreateUserManagerStub();
+            var signInManager = CreateSignInManagerStub(userManager);
 
             var controller = CreateControllerInstance(signInManager);
             controller.ModelState.AddModelError("", "");
@@ -668,10 +674,10 @@ namespace nikstra.CoreShopping.Web.Tests
         public async Task Post_LoginWithRecoveryCode_RedirectsToLockout_WhenAccountIsLockedOut()
         {
             // Arrange
-            var userManager = CreateUserManagerMock();
-            var signInManager = CreateSignInManagerMock(userManager);
+            var userManager = CreateUserManagerStub();
+            var signInManager = CreateSignInManagerStub(userManager);
             signInManager.GetTwoFactorAuthenticationUserAsync()
-                .Returns(Task.FromResult(CreateApplicationUser()));
+                .Returns(Task.FromResult(CreateGoodApplicationUser()));
             signInManager.TwoFactorRecoveryCodeSignInAsync(Arg.Any<string>())
                 .Returns(Task.FromResult(Microsoft.AspNetCore.Identity.SignInResult.LockedOut));
 
@@ -694,10 +700,10 @@ namespace nikstra.CoreShopping.Web.Tests
         public async Task Post_LoginWithRecoveryCode_AddModelErrorAndReturnsView_WhenRecoveryCodeIsInvalid()
         {
             // Arrange
-            var userManager = CreateUserManagerMock();
-            var signInManager = CreateSignInManagerMock(userManager);
+            var userManager = CreateUserManagerStub();
+            var signInManager = CreateSignInManagerStub(userManager);
             signInManager.GetTwoFactorAuthenticationUserAsync()
-                .Returns(Task.FromResult(CreateApplicationUser()));
+                .Returns(Task.FromResult(CreateGoodApplicationUser()));
             signInManager.TwoFactorRecoveryCodeSignInAsync(Arg.Any<string>())
                 .Returns(Task.FromResult(Microsoft.AspNetCore.Identity.SignInResult.Failed));
 
@@ -720,8 +726,8 @@ namespace nikstra.CoreShopping.Web.Tests
         public void Post_LoginWithRecoveryCode_ThrowsApplicationException_WhenUserWithTwoFactorAuthCanNotBeLoaded()
         {
             // Arrange
-            var userManager = CreateUserManagerMock();
-            var signInManager = CreateSignInManagerMock(userManager);
+            var userManager = CreateUserManagerStub();
+            var signInManager = CreateSignInManagerStub(userManager);
             signInManager.GetTwoFactorAuthenticationUserAsync()
                 .Returns(Task.FromResult((ApplicationUser)null));
 
@@ -778,8 +784,8 @@ namespace nikstra.CoreShopping.Web.Tests
         public void Get_Lockout_ReturnsView_WhenCalled()
         {
             // Arrange
-            var userManager = CreateUserManagerMock();
-            var signInManager = CreateSignInManagerMock(userManager);
+            var userManager = CreateUserManagerStub();
+            var signInManager = CreateSignInManagerStub(userManager);
 
             var controller = CreateControllerInstance(signInManager);
 
@@ -790,56 +796,5 @@ namespace nikstra.CoreShopping.Web.Tests
             Assert.That(result, Is.InstanceOf<ViewResult>());
         }
         #endregion
-
-        private ApplicationUser CreateApplicationUser() =>
-            new ApplicationUser
-            {
-                AccessFailedCount = 0,
-                ConcurrencyStamp = "abc",
-                Email = "user@domain.tld",
-                EmailConfirmed = false,
-                Id = "0001",
-                LockoutEnabled = false,
-                LockoutEnd = null,
-                NormalizedEmail = "USER@DOMAIN.TLD",
-                NormalizedUserName = "USER@DOMAIN.TLD",
-                PasswordHash = "hash",
-                PhoneNumber = "555-224466",
-                PhoneNumberConfirmed = false,
-                SecurityStamp = "stamp",
-                TwoFactorEnabled = false,
-                UserName = "user@domain.tld"
-            };
-
-        private UserManager<ApplicationUser> CreateUserManagerMock() =>
-            Substitute.For<UserManager<ApplicationUser>>(
-                Substitute.For<IUserStore<ApplicationUser>>(),
-                Substitute.For<IOptions<IdentityOptions>>(),
-                Substitute.For<IPasswordHasher<ApplicationUser>>(),
-                Substitute.For<IEnumerable<IUserValidator<ApplicationUser>>>(),
-                Substitute.For<IEnumerable<IPasswordValidator<ApplicationUser>>>(),
-                Substitute.For<ILookupNormalizer>(),
-                Substitute.For<IdentityErrorDescriber>(),
-                Substitute.For<IServiceProvider>(),
-                Substitute.For<ILogger<UserManager<ApplicationUser>>>()
-                );
-
-        private SignInManager<ApplicationUser> CreateSignInManagerMock(UserManager<ApplicationUser> userManager) =>
-            Substitute.For<SignInManager<ApplicationUser>>(
-                userManager,
-                Substitute.For<IHttpContextAccessor>(),
-                Substitute.For<IUserClaimsPrincipalFactory<ApplicationUser>>(),
-                Substitute.For<IOptions<IdentityOptions>>(),
-                Substitute.For<ILogger<SignInManager<ApplicationUser>>>(),
-                Substitute.For<IAuthenticationSchemeProvider>()
-                );
-
-        private AccountController CreateControllerInstance(SignInManager<ApplicationUser> signInManager) =>
-            new AccountController(
-                signInManager.UserManager,
-                signInManager,
-                Substitute.For<IEmailSender>(),
-                Substitute.For<ILogger<AccountController>>()
-                );
     }
 }
