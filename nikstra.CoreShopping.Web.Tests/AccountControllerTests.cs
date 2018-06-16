@@ -1362,5 +1362,123 @@ namespace nikstra.CoreShopping.Web.Tests
             Assert.That(ex.Message, Is.EqualTo("Error loading external login information during confirmation."));
         }
         #endregion
+
+        #region ConfirmEmail tests
+        [Test]
+        public void Get_ConfirmEmail_ShouldHaveHttpGetAttribute()
+        {
+            // Arrange
+            var type = typeof(AccountController);
+            var method = type.GetMethod(nameof(AccountController.ConfirmEmail),
+                new[] { typeof(string), typeof(string) });
+            var attributes = method.GetCustomAttributes(false);
+            var wantedAttributeType = typeof(HttpGetAttribute);
+
+            // Act
+            var result = attributes.FirstOrDefault(a => a.GetType() == wantedAttributeType);
+
+            // Assert
+            Assert.That(result, Is.Not.Null, $"No {wantedAttributeType.Name} found.");
+        }
+
+        [Test]
+        public void Get_ConfirmEmail_ShouldHaveAllowAnonymousAttribute()
+        {
+            // Arrange
+            var type = typeof(AccountController);
+            var method = type.GetMethod(nameof(AccountController.ConfirmEmail),
+                new[] { typeof(string), typeof(string) });
+            var attributes = method.GetCustomAttributes(false);
+            var wantedAttributeType = typeof(AllowAnonymousAttribute);
+
+            // Act
+            var result = attributes.FirstOrDefault(a => a.GetType() == wantedAttributeType);
+
+            // Assert
+            Assert.That(result, Is.Not.Null, $"No {wantedAttributeType.Name} found.");
+        }
+
+        [Test]
+        public async Task Get_ConfirmEmail_ReturnsView_WhenConfirmEmailSucceeds()
+        {
+            // Arrange
+            var userManager = CreateUserManagerStub();
+            userManager.FindByIdAsync(Arg.Any<string>())
+                .Returns(Task.FromResult(CreateGoodApplicationUser()));
+            userManager.ConfirmEmailAsync(Arg.Any<ApplicationUser>(), Arg.Any<string>())
+                .Returns(Task.FromResult(IdentityResult.Success));
+            var signInManager = CreateSignInManagerStub(userManager);
+
+            var controller = CreateControllerInstance(signInManager);
+
+            // Act
+            var result = await controller.ConfirmEmail("id", "code");
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<ViewResult>());
+            Assert.That((result as ViewResult).ViewName, Is.EqualTo(nameof(AccountController.ConfirmEmail)));
+        }
+
+        [Test]
+        public async Task Get_ConfirmEmail_ReturnsErrorView_WhenConfirmEmailFails()
+        {
+            // Arrange
+            var userManager = CreateUserManagerStub();
+            userManager.FindByIdAsync(Arg.Any<string>())
+                .Returns(Task.FromResult(CreateGoodApplicationUser()));
+            userManager.ConfirmEmailAsync(Arg.Any<ApplicationUser>(), Arg.Any<string>())
+                .Returns(Task.FromResult(IdentityResult.Failed(new IdentityError { Code = "code", Description = "description" })));
+            var signInManager = CreateSignInManagerStub(userManager);
+
+            var controller = CreateControllerInstance(signInManager);
+
+            // Act
+            var result = await controller.ConfirmEmail("id", "code");
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<ViewResult>());
+            Assert.That((result as ViewResult).ViewName, Is.EqualTo("Error"));
+        }
+
+        [Test]
+        public async Task Get_ConfirmEmail_RedirectsToHomeIndex_WhenAnArgumentIsNull()
+        {
+            // Arrange
+            var userManager = CreateUserManagerStub();
+            var signInManager = CreateSignInManagerStub(userManager);
+
+            var controller = CreateControllerInstance(signInManager);
+
+            // Act
+            var result = await controller.ConfirmEmail("id", null);
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<RedirectToActionResult>());
+            Assert.That((result as RedirectToActionResult).ControllerName, Is.EqualTo(nameof(HomeController).Replace("Controller", "")));
+            Assert.That((result as RedirectToActionResult).ActionName, Is.EqualTo(nameof(HomeController.Index)));
+        }
+
+        [Test]
+        public void Get_ConfirmEmail_ThrowsApplicationException_WhenUserIsNotFound()
+        {
+            // Arrange
+            var userManager = CreateUserManagerStub();
+            userManager.FindByIdAsync(Arg.Any<string>())
+                .Returns(Task.FromResult((ApplicationUser)null));
+            var signInManager = CreateSignInManagerStub(userManager);
+
+            var controller = CreateControllerInstance(signInManager);
+
+            // Act
+            async Task Act()
+            {
+                var result = await controller.ConfirmEmail("id", "code");
+            }
+
+            // Assert
+            var ex = Assert.ThrowsAsync<ApplicationException>(Act);
+            Assert.That(ex.Message, Does.StartWith("Unable to load user with ID"));
+        }
+        #endregion
     }
 }
