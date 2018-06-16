@@ -1480,5 +1480,184 @@ namespace nikstra.CoreShopping.Web.Tests
             Assert.That(ex.Message, Does.StartWith("Unable to load user with ID"));
         }
         #endregion
+
+        #region ForgotPassword tests
+        [Test]
+        public void Get_ForgotPassword_ShouldHaveHttpGetAttribute()
+        {
+            // Arrange
+            var type = typeof(AccountController);
+            var method = type.GetMethod(nameof(AccountController.ForgotPassword), Type.EmptyTypes);
+            var attributes = method.GetCustomAttributes(false);
+            var wantedAttributeType = typeof(HttpGetAttribute);
+
+            // Act
+            var result = attributes.FirstOrDefault(a => a.GetType() == wantedAttributeType);
+
+            // Assert
+            Assert.That(result, Is.Not.Null, $"No {wantedAttributeType.Name} found.");
+        }
+
+        [Test]
+        public void Get_ForgotPassword_ShouldHaveAllowAnonymousAttribute()
+        {
+            // Arrange
+            var type = typeof(AccountController);
+            var method = type.GetMethod(nameof(AccountController.ForgotPassword), Type.EmptyTypes);
+            var attributes = method.GetCustomAttributes(false);
+            var wantedAttributeType = typeof(AllowAnonymousAttribute);
+
+            // Act
+            var result = attributes.FirstOrDefault(a => a.GetType() == wantedAttributeType);
+
+            // Assert
+            Assert.That(result, Is.Not.Null, $"No {wantedAttributeType.Name} found.");
+        }
+
+        [Test]
+        public void Get_ForgotPassword_ReturnsView_WhenCalled()
+        {
+            // Arrange
+            var userManager = CreateUserManagerStub();
+            var signInManager = CreateSignInManagerStub(userManager);
+
+            var controller = CreateControllerInstance(signInManager);
+
+            // Act
+            var result = controller.ForgotPassword();
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<ViewResult>());
+        }
+
+        [Test]
+        public void Post_ForgotPassword_ShouldHaveHttpPostAttribute()
+        {
+            // Arrange
+            var type = typeof(AccountController);
+            var method = type.GetMethod(nameof(AccountController.ForgotPassword),
+                new[] { typeof(ForgotPasswordViewModel) });
+            var attributes = method.GetCustomAttributes(false);
+            var wantedAttributeType = typeof(HttpPostAttribute);
+
+            // Act
+            var result = attributes.FirstOrDefault(a => a.GetType() == wantedAttributeType);
+
+            // Assert
+            Assert.That(result, Is.Not.Null, $"No {wantedAttributeType.Name} found.");
+        }
+
+        [Test]
+        public void Post_ForgotPassword_ShouldHaveAllowAnonymousAttribute()
+        {
+            // Arrange
+            var type = typeof(AccountController);
+            var method = type.GetMethod(nameof(AccountController.ForgotPassword),
+                new[] { typeof(ForgotPasswordViewModel) });
+            var attributes = method.GetCustomAttributes(false);
+            var wantedAttributeType = typeof(AllowAnonymousAttribute);
+
+            // Act
+            var result = attributes.FirstOrDefault(a => a.GetType() == wantedAttributeType);
+
+            // Assert
+            Assert.That(result, Is.Not.Null, $"No {wantedAttributeType.Name} found.");
+        }
+
+        [Test]
+        public async Task Post_ForgotPassword_RedirectsToForgotPasswordConfirmation_WhenEmailIsSent()
+        {
+            // Arrange
+            var userManager = CreateUserManagerStub();
+            userManager.FindByEmailAsync(Arg.Any<string>())
+                .Returns(Task.FromResult(CreateGoodApplicationUser()));
+            userManager.IsEmailConfirmedAsync(Arg.Any<ApplicationUser>())
+                .Returns(Task.FromResult(true));
+            userManager.GeneratePasswordResetTokenAsync(Arg.Any<ApplicationUser>())
+                .Returns(Task.FromResult("token"));
+            var signInManager = CreateSignInManagerStub(userManager);
+
+            var model = new ForgotPasswordViewModel
+            {
+                Email = "user@domain.tld"
+            };
+
+            var controller = CreateControllerInstance(signInManager);
+            InjectControllerContextStub(controller, nameof(AccountController.ForgotPassword));
+
+            // Act
+            var result = await controller.ForgotPassword(model);
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<RedirectToActionResult>());
+            Assert.That((result as RedirectToActionResult).ActionName, Is.EqualTo(nameof(AccountController.ForgotPasswordConfirmation)));
+        }
+
+        [Test]
+        public async Task Post_ForgotPassword_ReturnsViewAndModel_WhenModelStateIsNotValid()
+        {
+            // Arrange
+            var userManager = CreateUserManagerStub();
+            var signInManager = CreateSignInManagerStub(userManager);
+
+            var model = new ForgotPasswordViewModel();
+
+            var controller = CreateControllerInstance(signInManager);
+            controller.ModelState.AddModelError("", "");
+
+            // Act
+            var result = await controller.ForgotPassword(model);
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<ViewResult>());
+            Assert.That((result as ViewResult).Model, Is.InstanceOf< ForgotPasswordViewModel>());
+        }
+
+        [Test]
+        public async Task Post_ForgotPassword_RedirectsToForgotPasswordConfirmation_WhenUserIsNotFound()
+        {
+            // Arrange
+            var userManager = CreateUserManagerStub();
+            userManager.FindByEmailAsync(Arg.Any<string>())
+                .Returns(Task.FromResult((ApplicationUser)null));
+            userManager.IsEmailConfirmedAsync(Arg.Any<ApplicationUser>())
+                .Returns(Task.FromResult(true));
+            var signInManager = CreateSignInManagerStub(userManager);
+
+            var model = new ForgotPasswordViewModel();
+
+            var controller = CreateControllerInstance(signInManager);
+
+            // Act
+            var result = await controller.ForgotPassword(model);
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<RedirectToActionResult>());
+            Assert.That((result as RedirectToActionResult).ActionName, Is.EqualTo(nameof(AccountController.ForgotPasswordConfirmation)));
+        }
+
+        [Test]
+        public async Task Post_ForgotPassword_RedirectsToForgotPasswordConfirmation_WhenEmailIsNotConfirmed()
+        {
+            // Arrange
+            var userManager = CreateUserManagerStub();
+            userManager.FindByEmailAsync(Arg.Any<string>())
+                .Returns(Task.FromResult(CreateGoodApplicationUser()));
+            userManager.IsEmailConfirmedAsync(Arg.Any<ApplicationUser>())
+                .Returns(Task.FromResult(false));
+            var signInManager = CreateSignInManagerStub(userManager);
+
+            var model = new ForgotPasswordViewModel();
+
+            var controller = CreateControllerInstance(signInManager);
+
+            // Act
+            var result = await controller.ForgotPassword(model);
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<RedirectToActionResult>());
+            Assert.That((result as RedirectToActionResult).ActionName, Is.EqualTo(nameof(AccountController.ForgotPasswordConfirmation)));
+        }
+        #endregion
     }
 }
