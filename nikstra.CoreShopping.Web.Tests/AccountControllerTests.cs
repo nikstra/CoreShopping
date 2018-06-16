@@ -14,6 +14,7 @@ using NSubstitute;
 using NUnit.Framework;
 using System;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace nikstra.CoreShopping.Web.Tests
@@ -1048,6 +1049,146 @@ namespace nikstra.CoreShopping.Web.Tests
             // Assert
             Assert.That(result, Is.InstanceOf<ChallengeResult>());
             Assert.That((result as ChallengeResult).Properties.RedirectUri, Is.EqualTo("url"));
+        }
+        #endregion
+
+        #region ExternalLoginCallback tests
+        [Test]
+        public void Get_ExternalLoginCallback_ShouldHaveHttpGetAttribute()
+        {
+            // Arrange
+            var type = typeof(AccountController);
+            var method = type.GetMethod(nameof(AccountController.ExternalLoginCallback),
+                new[] { typeof(string), typeof(string) });
+            var attributes = method.GetCustomAttributes(false);
+            var wantedAttributeType = typeof(HttpGetAttribute);
+
+            // Act
+            var result = attributes.FirstOrDefault(a => a.GetType() == wantedAttributeType);
+
+            // Assert
+            Assert.That(result, Is.Not.Null, $"No {wantedAttributeType.Name} found.");
+        }
+
+        [Test]
+        public void Get_ExternalLoginCallback_ShouldHaveAllowAnonymousAttribute()
+        {
+            // Arrange
+            var type = typeof(AccountController);
+            var method = type.GetMethod(nameof(AccountController.ExternalLoginCallback),
+                new[] { typeof(string), typeof(string) });
+            var attributes = method.GetCustomAttributes(false);
+            var wantedAttributeType = typeof(AllowAnonymousAttribute);
+
+            // Act
+            var result = attributes.FirstOrDefault(a => a.GetType() == wantedAttributeType);
+
+            // Assert
+            Assert.That(result, Is.Not.Null, $"No {wantedAttributeType.Name} found.");
+        }
+
+        [Test]
+        public async Task Get_ExternalLoginCallback_RedirectsToReturnUrl_WhenLoginIsSuccessful()
+        {
+            // Arrange
+            var userManager = CreateUserManagerStub();
+            var signInManager = CreateSignInManagerStub(userManager);
+            signInManager.GetExternalLoginInfoAsync()
+                .Returns(Task.FromResult(new ExternalLoginInfo(new ClaimsPrincipal(), "provider", "key", "name")));
+            signInManager.ExternalLoginSignInAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<bool>())
+                .Returns(Task.FromResult(Microsoft.AspNetCore.Identity.SignInResult.Success));
+
+            var controller = CreateControllerInstance(signInManager);
+            InjectControllerContextStub(controller, nameof(AccountController.Register));
+
+            // Act
+            var result = await controller.ExternalLoginCallback("url");
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<RedirectResult>());
+            Assert.That((result as RedirectResult).Url, Is.EqualTo("url"));
+        }
+
+        [Test]
+        public async Task Get_ExternalLoginCallback_RedirectsToLogin_WhenThereIsARemoteError()
+        {
+            // Arrange
+            var userManager = CreateUserManagerStub();
+            var signInManager = CreateSignInManagerStub(userManager);
+
+            var controller = CreateControllerInstance(signInManager);
+
+            // Act
+            var result = await controller.ExternalLoginCallback("url", "remote error");
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<RedirectToActionResult>());
+            Assert.That((result as RedirectToActionResult).ActionName, Is.EqualTo(nameof(AccountController.Login)));
+            Assert.That(controller.ErrorMessage, Does.StartWith("Error from external provider:"));
+        }
+
+        [Test]
+        public async Task Get_ExternalLoginCallback_RedirectsToLogin_WhenFailingToGetExternalLoginInfo()
+        {
+            // Arrange
+            var userManager = CreateUserManagerStub();
+            var signInManager = CreateSignInManagerStub(userManager);
+            signInManager.GetExternalLoginInfoAsync()
+                .Returns(Task.FromResult((ExternalLoginInfo)null));
+
+            var controller = CreateControllerInstance(signInManager);
+
+            // Act
+            var result = await controller.ExternalLoginCallback("url");
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<RedirectToActionResult>());
+            Assert.That((result as RedirectToActionResult).ActionName, Is.EqualTo(nameof(AccountController.Login)));
+        }
+
+        [Test]
+        public async Task Get_ExternalLoginCallback_RedirectsToLockout_WhenAccountIsLockedOut()
+        {
+            // Arrange
+            var userManager = CreateUserManagerStub();
+            var signInManager = CreateSignInManagerStub(userManager);
+            signInManager.GetExternalLoginInfoAsync()
+                .Returns(Task.FromResult(new ExternalLoginInfo(new ClaimsPrincipal(), "provider", "key", "name")));
+            signInManager.ExternalLoginSignInAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<bool>())
+                .Returns(Task.FromResult(Microsoft.AspNetCore.Identity.SignInResult.LockedOut));
+
+            var controller = CreateControllerInstance(signInManager);
+
+            // Act
+            var result = await controller.ExternalLoginCallback("url");
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<RedirectToActionResult>());
+            Assert.That((result as RedirectToActionResult).ActionName, Is.EqualTo(nameof(AccountController.Lockout)));
+        }
+
+        [Test]
+        public async Task Get_ExternalLoginCallback_ReturnsViewAndModel_WhenUserDoesNotHaveAnAccount()
+        {
+            // Arrange
+            var userManager = CreateUserManagerStub();
+            var signInManager = CreateSignInManagerStub(userManager);
+            signInManager.GetExternalLoginInfoAsync()
+                .Returns(Task.FromResult(new ExternalLoginInfo(new ClaimsPrincipal(), "provider", "key", "name")));
+            signInManager.ExternalLoginSignInAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<bool>())
+                .Returns(Task.FromResult(Microsoft.AspNetCore.Identity.SignInResult.Failed));
+
+            var controller = CreateControllerInstance(signInManager);
+
+            // Act
+            var result = await controller.ExternalLoginCallback("url");
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<ViewResult>());
+            Assert.That((result as ViewResult).Model, Is.InstanceOf<ExternalLoginViewModel>());
+            Assert.That((result as ViewResult).ViewName, Is.EqualTo("ExternalLogin"));
+            Assert.That(controller.ViewData["ReturnUrl"], Is.EqualTo("url"));
+            Assert.That(controller.ViewData["LoginProvider"], Is.EqualTo("provider"));
         }
         #endregion
     }
