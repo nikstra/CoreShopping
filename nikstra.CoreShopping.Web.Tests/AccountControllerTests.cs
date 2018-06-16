@@ -1191,5 +1191,176 @@ namespace nikstra.CoreShopping.Web.Tests
             Assert.That(controller.ViewData["LoginProvider"], Is.EqualTo("provider"));
         }
         #endregion
+
+        #region ExternalLoginConfirmation tests
+        [Test]
+        public void Post_ExternalLoginConfirmation_ShouldHaveHttpPostAttribute()
+        {
+            // Arrange
+            var type = typeof(AccountController);
+            var method = type.GetMethod(nameof(AccountController.ExternalLoginConfirmation),
+                new[] { typeof(ExternalLoginViewModel), typeof(string) });
+            var attributes = method.GetCustomAttributes(false);
+            var wantedAttributeType = typeof(HttpPostAttribute);
+
+            // Act
+            var result = attributes.FirstOrDefault(a => a.GetType() == wantedAttributeType);
+
+            // Assert
+            Assert.That(result, Is.Not.Null, $"No {wantedAttributeType.Name} found.");
+        }
+
+        [Test]
+        public void Post_ExternalLoginConfirmation_ShouldHaveAllowAnonymousAttribute()
+        {
+            // Arrange
+            var type = typeof(AccountController);
+            var method = type.GetMethod(nameof(AccountController.ExternalLoginConfirmation),
+                new[] { typeof(ExternalLoginViewModel), typeof(string) });
+            var attributes = method.GetCustomAttributes(false);
+            var wantedAttributeType = typeof(AllowAnonymousAttribute);
+
+            // Act
+            var result = attributes.FirstOrDefault(a => a.GetType() == wantedAttributeType);
+
+            // Assert
+            Assert.That(result, Is.Not.Null, $"No {wantedAttributeType.Name} found.");
+        }
+
+        [Test]
+        public async Task Post_ExternalLoginConfirmation_RedirectsToReturnUrl_WhenLoginIsSuccessfullyAdded()
+        {
+            // Arrange
+            var userManager = CreateUserManagerStub();
+            userManager.CreateAsync(Arg.Any<ApplicationUser>())
+                .Returns(Task.FromResult(IdentityResult.Success));
+            userManager.AddLoginAsync(Arg.Any<ApplicationUser>(), Arg.Any<UserLoginInfo>())
+                .Returns(Task.FromResult(IdentityResult.Success));
+            var signInManager = CreateSignInManagerStub(userManager);
+            signInManager.GetExternalLoginInfoAsync()
+                .Returns(Task.FromResult(new ExternalLoginInfo(new ClaimsPrincipal(), "provider", "key", "name")));
+            signInManager.SignInAsync(Arg.Any<ApplicationUser>(), Arg.Any<bool>())
+                .Returns(Task.FromResult(0));
+
+            var model = new ExternalLoginViewModel
+            {
+                Email = "user@domain.tld"
+            };
+
+            var controller = CreateControllerInstance(signInManager);
+            InjectControllerContextStub(controller, nameof(AccountController.Register));
+
+            // Act
+            var result = await controller.ExternalLoginConfirmation(model, "url");
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<RedirectResult>());
+            Assert.That((result as RedirectResult).Url, Is.EqualTo("url"));
+        }
+
+        [Test]
+        public async Task Post_ExternalLoginConfirmation_ReturnsViewAndModel_WhenModelStateIsNotValid()
+        {
+            // Arrange
+            var userManager = CreateUserManagerStub();
+            var signInManager = CreateSignInManagerStub(userManager);
+
+            var model = new ExternalLoginViewModel();
+
+            var controller = CreateControllerInstance(signInManager);
+            controller.ModelState.AddModelError("", "");
+
+            // Act
+            var result = await controller.ExternalLoginConfirmation(model, "url");
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<ViewResult>());
+            Assert.That((result as ViewResult).ViewName, Is.EqualTo(nameof(AccountController.ExternalLogin)));
+            Assert.That((result as ViewResult).Model, Is.InstanceOf< ExternalLoginViewModel>());
+            Assert.That(controller.ViewData["ReturnUrl"], Is.EqualTo("url"));
+        }
+
+        [Test]
+        public async Task Post_ExternalLoginConfirmation_AddsModelErrorsAndReturnsViewAndModel_WhenFailingToCreateUser()
+        {
+            // Arrange
+            var userManager = CreateUserManagerStub();
+            userManager.CreateAsync(Arg.Any<ApplicationUser>())
+                .Returns(Task.FromResult(IdentityResult.Failed(new IdentityError { Code = "code", Description = "description" })));
+            var signInManager = CreateSignInManagerStub(userManager);
+            signInManager.GetExternalLoginInfoAsync()
+                .Returns(Task.FromResult(new ExternalLoginInfo(new ClaimsPrincipal(), "provider", "key", "name")));
+
+            var model = new ExternalLoginViewModel
+            {
+                Email = "user@domain.tld"
+            };
+
+            var controller = CreateControllerInstance(signInManager);
+            InjectControllerContextStub(controller, nameof(AccountController.Register));
+
+            // Act
+            var result = await controller.ExternalLoginConfirmation(model, "url");
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<ViewResult>());
+            Assert.That(controller.ViewData["ReturnUrl"], Is.EqualTo("url"));
+            Assert.That(controller.ModelState.ErrorCount, Is.GreaterThan(0));
+        }
+
+        [Test]
+        public async Task Post_ExternalLoginConfirmation_AddsModelErrorsAndReturnsViewAndModel_WhenFailingToAddLogin()
+        {
+            // Arrange
+            var userManager = CreateUserManagerStub();
+            userManager.CreateAsync(Arg.Any<ApplicationUser>())
+                .Returns(Task.FromResult(IdentityResult.Success));
+            userManager.AddLoginAsync(Arg.Any<ApplicationUser>(), Arg.Any<UserLoginInfo>())
+                .Returns(Task.FromResult(IdentityResult.Failed(new IdentityError { Code = "code", Description = "description" })));
+            var signInManager = CreateSignInManagerStub(userManager);
+            signInManager.GetExternalLoginInfoAsync()
+                .Returns(Task.FromResult(new ExternalLoginInfo(new ClaimsPrincipal(), "provider", "key", "name")));
+
+            var model = new ExternalLoginViewModel
+            {
+                Email = "user@domain.tld"
+            };
+
+            var controller = CreateControllerInstance(signInManager);
+            InjectControllerContextStub(controller, nameof(AccountController.Register));
+
+            // Act
+            var result = await controller.ExternalLoginConfirmation(model, "url");
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<ViewResult>());
+            Assert.That(controller.ViewData["ReturnUrl"], Is.EqualTo("url"));
+            Assert.That(controller.ModelState.ErrorCount, Is.GreaterThan(0));
+        }
+
+        [Test]
+        public void Post_ExternalLoginConfirmation_ThrowsApplicationException_WhenFailingToGetExternalLoginInfo()
+        {
+            // Arrange
+            var userManager = CreateUserManagerStub();
+            var signInManager = CreateSignInManagerStub(userManager);
+            signInManager.GetExternalLoginInfoAsync()
+                .Returns(Task.FromResult((ExternalLoginInfo)null));
+
+            var model = new ExternalLoginViewModel();
+
+            var controller = CreateControllerInstance(signInManager);
+
+            // Act
+            async Task Act()
+            {
+                var result = await controller.ExternalLoginConfirmation(model, "url");
+            }
+
+            // Assert
+            var ex = Assert.ThrowsAsync<ApplicationException>(Act);
+            Assert.That(ex.Message, Is.EqualTo("Error loading external login information during confirmation."));
+        }
+        #endregion
     }
 }
