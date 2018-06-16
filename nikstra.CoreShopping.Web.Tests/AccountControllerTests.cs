@@ -1661,7 +1661,6 @@ namespace nikstra.CoreShopping.Web.Tests
         #endregion
 
         #region ForgotPasswordConfirmation tests
-        //public IActionResult ForgotPasswordConfirmation()
         [Test]
         public void Get_ForgotPasswordConfirmation_ShouldHaveHttpGetAttribute()
         {
@@ -1708,6 +1707,216 @@ namespace nikstra.CoreShopping.Web.Tests
 
             // Assert
             Assert.That(result, Is.InstanceOf<ViewResult>());
+        }
+        #endregion
+
+        #region ResetPassword tests
+        [Test]
+        public void Get_ResetPassword_ShouldHaveHttpGetAttribute()
+        {
+            // Arrange
+            var type = typeof(AccountController);
+            var method = type.GetMethod(nameof(AccountController.ResetPassword), new [] { typeof(string) });
+            var attributes = method.GetCustomAttributes(false);
+            var wantedAttributeType = typeof(HttpGetAttribute);
+
+            // Act
+            var result = attributes.FirstOrDefault(a => a.GetType() == wantedAttributeType);
+
+            // Assert
+            Assert.That(result, Is.Not.Null, $"No {wantedAttributeType.Name} found.");
+        }
+
+        [Test]
+        public void Get_ResetPassword_ShouldHaveAllowAnonymousAttribute()
+        {
+            // Arrange
+            var type = typeof(AccountController);
+            var method = type.GetMethod(nameof(AccountController.ResetPassword), new[] { typeof(string) });
+            var attributes = method.GetCustomAttributes(false);
+            var wantedAttributeType = typeof(AllowAnonymousAttribute);
+
+            // Act
+            var result = attributes.FirstOrDefault(a => a.GetType() == wantedAttributeType);
+
+            // Assert
+            Assert.That(result, Is.Not.Null, $"No {wantedAttributeType.Name} found.");
+        }
+
+        [Test]
+        public void Get_ResetPassword_ReturnsViewAndModel_WhenCalled()
+        {
+            // Arrange
+            var userManager = CreateUserManagerStub();
+            var signInManager = CreateSignInManagerStub(userManager);
+
+            var controller = CreateControllerInstance(signInManager);
+
+            // Act
+            var result = controller.ResetPassword("code");
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<ViewResult>());
+            Assert.That((result as ViewResult).Model, Is.InstanceOf<ResetPasswordViewModel>());
+            Assert.That(((result as ViewResult).Model as ResetPasswordViewModel).Code, Is.EqualTo("code"));
+        }
+
+        [Test]
+        public void Get_ResetPassword_ThrowsApplicationException_WhenCodeIsNull()
+        {
+            // Arrange
+            var userManager = CreateUserManagerStub();
+            var signInManager = CreateSignInManagerStub(userManager);
+
+            var controller = CreateControllerInstance(signInManager);
+
+            // Act
+            void Act()
+            {
+                var result = controller.ResetPassword((string)null);
+            }
+
+            // Assert
+            var ex = Assert.Throws<ApplicationException>(Act);
+            Assert.That(ex.Message, Is.EqualTo("A code must be supplied for password reset."));
+        }
+
+        [Test]
+        public void Post_ResetPassword_ShouldHaveHttpPostAttribute()
+        {
+            // Arrange
+            var type = typeof(AccountController);
+            var method = type.GetMethod(nameof(AccountController.ResetPassword),
+                new[] { typeof(ResetPasswordViewModel) });
+            var attributes = method.GetCustomAttributes(false);
+            var wantedAttributeType = typeof(HttpPostAttribute);
+
+            // Act
+            var result = attributes.FirstOrDefault(a => a.GetType() == wantedAttributeType);
+
+            // Assert
+            Assert.That(result, Is.Not.Null, $"No {wantedAttributeType.Name} found.");
+        }
+
+        [Test]
+        public void Post_ResetPassword_ShouldHaveAllowAnonymousAttribute()
+        {
+            // Arrange
+            var type = typeof(AccountController);
+            var method = type.GetMethod(nameof(AccountController.ResetPassword),
+                new[] { typeof(ResetPasswordViewModel) });
+            var attributes = method.GetCustomAttributes(false);
+            var wantedAttributeType = typeof(AllowAnonymousAttribute);
+
+            // Act
+            var result = attributes.FirstOrDefault(a => a.GetType() == wantedAttributeType);
+
+            // Assert
+            Assert.That(result, Is.Not.Null, $"No {wantedAttributeType.Name} found.");
+        }
+
+        [Test]
+        public async Task Post_ResetPassword_RedirectsToResetPasswordConfirmation_WhenPasswordIsReset()
+        {
+            // Arrange
+            var userManager = CreateUserManagerStub();
+            userManager.FindByEmailAsync(Arg.Any<string>())
+                .Returns(Task.FromResult(CreateGoodApplicationUser()));
+            userManager.ResetPasswordAsync(Arg.Any<ApplicationUser>(), Arg.Any<string>(), Arg.Any<string>())
+                .Returns(Task.FromResult(IdentityResult.Success));
+            var signInManager = CreateSignInManagerStub(userManager);
+
+            var model = new ResetPasswordViewModel
+            {
+                Code = "code",
+                Email = "user@domain.tld",
+                Password = "password"
+            };
+
+            var controller = CreateControllerInstance(signInManager);
+            InjectControllerContextStub(controller, nameof(AccountController.ForgotPassword));
+
+            // Act
+            var result = await controller.ResetPassword(model);
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<RedirectToActionResult>());
+            Assert.That((result as RedirectToActionResult).ActionName, Is.EqualTo(nameof(AccountController.ResetPasswordConfirmation)));
+        }
+
+        [Test]
+        public async Task Post_ResetPassword_ReturnsViewAndModel_WhenModelStateIsNotValid()
+        {
+            // Arrange
+            var userManager = CreateUserManagerStub();
+            var signInManager = CreateSignInManagerStub(userManager);
+
+            var model = new ResetPasswordViewModel();
+
+            var controller = CreateControllerInstance(signInManager);
+            controller.ModelState.AddModelError("", "");
+
+            // Act
+            var result = await controller.ResetPassword(model);
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<ViewResult>());
+            Assert.That((result as ViewResult).Model, Is.InstanceOf< ResetPasswordViewModel>());
+        }
+
+        [Test]
+        public async Task Post_ResetPassword_RedirectsToResetPasswordConfirmation_WhenUserIsNotFound()
+        {
+            // Arrange
+            var userManager = CreateUserManagerStub();
+            userManager.FindByEmailAsync(Arg.Any<string>())
+                .Returns(Task.FromResult(CreateNullApplicationUser()));
+            var signInManager = CreateSignInManagerStub(userManager);
+
+            var model = new ResetPasswordViewModel
+            {
+                Code = "code",
+                Email = "user@domain.tld",
+                Password = "password"
+            };
+
+            var controller = CreateControllerInstance(signInManager);
+
+            // Act
+            var result = await controller.ResetPassword(model);
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<RedirectToActionResult>());
+            Assert.That((result as RedirectToActionResult).ActionName, Is.EqualTo(nameof(AccountController.ResetPasswordConfirmation)));
+        }
+
+        [Test]
+        public async Task Post_ResetPassword_AddsModelErrorsAndReturnsView_WhenResetPasswordFails()
+        {
+            // Arrange
+            var userManager = CreateUserManagerStub();
+            userManager.FindByEmailAsync(Arg.Any<string>())
+                .Returns(Task.FromResult(CreateGoodApplicationUser()));
+            userManager.ResetPasswordAsync(Arg.Any<ApplicationUser>(), Arg.Any<string>(), Arg.Any<string>())
+                .Returns(Task.FromResult(IdentityResult.Failed(new IdentityError { Code = "code", Description = "description" })));
+            var signInManager = CreateSignInManagerStub(userManager);
+
+            var model = new ResetPasswordViewModel
+            {
+                Code = "code",
+                Email = "user@domain.tld",
+                Password = "password"
+            };
+
+            var controller = CreateControllerInstance(signInManager);
+            InjectControllerContextStub(controller, nameof(AccountController.ForgotPassword));
+
+            // Act
+            var result = await controller.ResetPassword(model);
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<ViewResult>());
+            Assert.That(controller.ModelState.ErrorCount, Is.GreaterThan(0));
         }
         #endregion
     }
