@@ -1659,5 +1659,56 @@ namespace nikstra.CoreShopping.Web.Tests
             Assert.That((result as RedirectToActionResult).ActionName, Is.EqualTo(nameof(AccountController.ForgotPasswordConfirmation)));
         }
         #endregion
+
+        #region ForgotPasswordConfirmation tests
+        //public IActionResult ForgotPasswordConfirmation()
+        [Test]
+        public void Get_ForgotPasswordConfirmation_ShouldHaveHttpGetAttribute()
+        {
+            // Arrange
+            var type = typeof(AccountController);
+            var method = type.GetMethod(nameof(AccountController.ForgotPasswordConfirmation), Type.EmptyTypes);
+            var attributes = method.GetCustomAttributes(false);
+            var wantedAttributeType = typeof(HttpGetAttribute);
+
+            // Act
+            var result = attributes.FirstOrDefault(a => a.GetType() == wantedAttributeType);
+
+            // Assert
+            Assert.That(result, Is.Not.Null, $"No {wantedAttributeType.Name} found.");
+        }
+
+        [Test]
+        public void Get_ForgotPasswordConfirmation_ShouldHaveAllowAnonymousAttribute()
+        {
+            // Arrange
+            var type = typeof(AccountController);
+            var method = type.GetMethod(nameof(AccountController.ForgotPasswordConfirmation), Type.EmptyTypes);
+            var attributes = method.GetCustomAttributes(false);
+            var wantedAttributeType = typeof(AllowAnonymousAttribute);
+
+            // Act
+            var result = attributes.FirstOrDefault(a => a.GetType() == wantedAttributeType);
+
+            // Assert
+            Assert.That(result, Is.Not.Null, $"No {wantedAttributeType.Name} found.");
+        }
+
+        [Test]
+        public void Get_ForgotPasswordConfirmation_ReturnsView_WhenCalled()
+        {
+            // Arrange
+            var userManager = CreateUserManagerStub();
+            var signInManager = CreateSignInManagerStub(userManager);
+
+            var controller = CreateControllerInstance(signInManager);
+
+            // Act
+            var result = controller.ForgotPasswordConfirmation();
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<ViewResult>());
+        }
+        #endregion
     }
 }
