@@ -30,7 +30,7 @@ namespace nikstra.CoreShopping.Web.Tests
                 Substitute.For<UrlEncoder>()
                 );
 
-        #region Index() method tests
+        #region Index() tests
         [Test]
         public async Task Get_Index_SuccessfullyReturnsViewAndModel_WhenUserExists()
         {
@@ -231,7 +231,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
         #endregion
 
-        #region SendVerificationEmail() method tests
+        #region SendVerificationEmail() tests
         [Test]
         public async Task Post_SendVerificationEmail_SuccessfullySendsEmail_WhenUserExists()
         {
@@ -495,7 +495,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
         #endregion
 
-        #region SetPassword() method tests
+        #region SetPassword() tests
         [Test]
         public async Task Get_SetPassword_SuccessfullyReturnsViewAndModel_WhenUserDoesNotHaveAPassword()
         {
@@ -657,7 +657,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
         #endregion
 
-        #region ExternalLogins() method tests
+        #region ExternalLogins() tests
         [Test]
         public async Task Get_ExternalLogins_ReturnsViewAndModel_WhenUserHasNoExternalLogins()
         {
@@ -776,7 +776,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
         #endregion
 
-        #region LinkLogin() method tests
+        #region LinkLogin() tests
         [Test]
         public async Task Post_LinkLogin_ReturnsChallengeResult_WhenSuccessful()
         {
@@ -799,7 +799,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
         #endregion
 
-        #region LinkLoginCallback() method tests
+        #region LinkLoginCallback() tests
         [Test]
         public async Task Get_LinkLoginCallback_RedirectsToExternalLogins_WhenLoginIsSuccessfullyAdded()
         {
@@ -900,7 +900,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
         #endregion
 
-        #region RemoveLogin() method tests
+        #region RemoveLogin() tests
         [Test]
         public async Task Post_RemoveLogin_RedirectsToExternalLogins_WhenLoginIsRemoved()
         {
@@ -978,7 +978,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
         #endregion
 
-        #region TwoFactorAuthentication() method tests
+        #region TwoFactorAuthentication() tests
         [Test]
         public async Task Get_TwoFactorAuthentication_ReturnsViewAndModel_WhenUserExists()
         {
@@ -1027,7 +1027,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
         #endregion
 
-        #region Disable2faWarning() method tests
+        #region Disable2faWarning() tests
         [Test]
         public async Task Get_Disable2faWarning_ReturnsView_WhenUserExists()
         {
@@ -1094,7 +1094,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
         #endregion
 
-        #region Disable2fa() method tests
+        #region Disable2fa() tests
         [Test]
         public async Task Post_Disable2fa_RedirectsToTwoFactorAuthentication_WhenUseExists()
         {
@@ -1163,7 +1163,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
         #endregion
 
-        #region EnableAuthenticator() method tests
+        #region EnableAuthenticator() tests
         [Test]
         public async Task Get_EnableAuthenticator_ReturnsViewAndModel_WhenUserExists()
         {
@@ -1326,7 +1326,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
         #endregion
 
-        #region ShowRecoveryCodes() method tests
+        #region ShowRecoveryCodes() tests
         [Test]
         public void Get_ShowRecoveryCodes_ReturnsViewAndModel_WhenRecoveryCodesExists()
         {
@@ -1366,7 +1366,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
         #endregion
 
-        #region ResetAuthenticatorWarning() method tests
+        #region ResetAuthenticatorWarning() tests
         [Test]
         public void Get_ResetAuthenticatorWarning_ReturnsViewResetAuthenticator_WhenCalled()
         {
@@ -1385,7 +1385,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
         #endregion
 
-        #region ResetAuthenticator() method tests
+        #region ResetAuthenticator() tests
         [Test]
         public async Task Post_ResetAuthenticator_RedirectsToEnableAuthenticator_WhenAuthenticationIsReset()
         {
@@ -1432,7 +1432,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
         #endregion
 
-        #region GenerateRecoveryCodesWarning() method tests
+        #region GenerateRecoveryCodesWarning() tests
         [Test]
         public async Task Get_GenerateRecoveryCodesWarning_ReturnsViewGenerateRecoveryCodes_WhenUserHasTwoFactorEnabled()
         {
@@ -1499,7 +1499,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
         #endregion
 
-        #region GenerateRecoveryCodes() method tests
+        #region GenerateRecoveryCodes() tests
         [Test]
         public async Task Post_GenerateRecoveryCodes_ReturnsViewShowRecoveryCodesAndModel_WhenUserHasTwoFactorEnabled()
         {
