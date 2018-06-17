@@ -69,12 +69,9 @@ namespace nikstra.CoreShopping.Web.Tests
             // Arrange
             var userManager = CreateUserManagerStub();
             var signInManager = CreateSignInManagerStub(userManager);
+
             var controller = CreateControllerInstance(signInManager);
-            controller.ControllerContext.HttpContext = new DefaultHttpContext();
-            controller.TempData = new TempDataDictionary(controller.HttpContext, Substitute.For<ITempDataProvider>());
-            controller.HttpContext.RequestServices = Substitute.For<IServiceProvider>();
-            controller.HttpContext.RequestServices.GetService(typeof(IAuthenticationService))
-                .Returns(Substitute.For<IAuthenticationService>());
+            InjectControllerContextStub(controller, nameof(AccountController.Login));
 
             // Act
             var result = await controller.Login("url");
@@ -126,10 +123,7 @@ namespace nikstra.CoreShopping.Web.Tests
                 .Returns(Task.FromResult(Microsoft.AspNetCore.Identity.SignInResult.Success));
 
             var controller = CreateControllerInstance(signInManager);
-            controller.ControllerContext.HttpContext = new DefaultHttpContext();
-            controller.TempData = new TempDataDictionary(controller.HttpContext, Substitute.For<ITempDataProvider>());
-            controller.Url = Substitute.For<IUrlHelper>();
-            controller.Url.IsLocalUrl(Arg.Any<string>()).Returns(true);
+            InjectControllerContextStub(controller, nameof(AccountController.Login));
 
             var model = new LoginViewModel
             {
@@ -157,8 +151,7 @@ namespace nikstra.CoreShopping.Web.Tests
                 .Returns(Task.FromResult(Microsoft.AspNetCore.Identity.SignInResult.TwoFactorRequired));
 
             var controller = CreateControllerInstance(signInManager);
-            controller.ControllerContext.HttpContext = new DefaultHttpContext();
-            controller.TempData = new TempDataDictionary(controller.HttpContext, Substitute.For<ITempDataProvider>());
+            InjectControllerContextStub(controller, nameof(AccountController.Login));
 
             var model = new LoginViewModel
             {
@@ -186,8 +179,7 @@ namespace nikstra.CoreShopping.Web.Tests
                 .Returns(Task.FromResult(Microsoft.AspNetCore.Identity.SignInResult.LockedOut));
 
             var controller = CreateControllerInstance(signInManager);
-            controller.ControllerContext.HttpContext = new DefaultHttpContext();
-            controller.TempData = new TempDataDictionary(controller.HttpContext, Substitute.For<ITempDataProvider>());
+            InjectControllerContextStub(controller, nameof(AccountController.Login));
 
             var model = new LoginViewModel
             {
@@ -215,8 +207,7 @@ namespace nikstra.CoreShopping.Web.Tests
                 .Returns(Task.FromResult(Microsoft.AspNetCore.Identity.SignInResult.Failed));
 
             var controller = CreateControllerInstance(signInManager);
-            controller.ControllerContext.HttpContext = new DefaultHttpContext();
-            controller.TempData = new TempDataDictionary(controller.HttpContext, Substitute.For<ITempDataProvider>());
+            InjectControllerContextStub(controller, nameof(AccountController.Login));
 
             var model = new LoginViewModel
             {
@@ -245,8 +236,7 @@ namespace nikstra.CoreShopping.Web.Tests
                 .Returns(Task.FromResult(Microsoft.AspNetCore.Identity.SignInResult.Failed));
 
             var controller = CreateControllerInstance(signInManager);
-            controller.ControllerContext.HttpContext = new DefaultHttpContext();
-            controller.TempData = new TempDataDictionary(controller.HttpContext, Substitute.For<ITempDataProvider>());
+            InjectControllerContextStub(controller, nameof(AccountController.Login));
             controller.ModelState.AddModelError("", "");
 
             var model = new LoginViewModel
@@ -389,8 +379,7 @@ namespace nikstra.CoreShopping.Web.Tests
                 .Returns(Task.FromResult(Microsoft.AspNetCore.Identity.SignInResult.Success));
 
             var controller = CreateControllerInstance(signInManager);
-            controller.Url = Substitute.For<IUrlHelper>();
-            controller.Url.IsLocalUrl(Arg.Any<string>()).Returns(true);
+            InjectControllerContextStub(controller, nameof(AccountController.LoginWith2fa));
 
             var model = new LoginWith2faViewModel
             {
@@ -634,8 +623,7 @@ namespace nikstra.CoreShopping.Web.Tests
                 .Returns(Task.FromResult(Microsoft.AspNetCore.Identity.SignInResult.Success));
 
             var controller = CreateControllerInstance(signInManager);
-            controller.Url = Substitute.For<IUrlHelper>();
-            controller.Url.IsLocalUrl(Arg.Any<string>()).Returns(true);
+            InjectControllerContextStub(controller, nameof(AccountController.LoginWithRecoveryCode));
 
             var model = new LoginWithRecoveryCodeViewModel
             {

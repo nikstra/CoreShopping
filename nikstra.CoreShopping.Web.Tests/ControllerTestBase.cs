@@ -6,12 +6,14 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.Routing;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Net.Http.Headers;
 using nikstra.CoreShopping.Web.Models;
 using NSubstitute;
+using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Security.Claims;
@@ -24,6 +26,7 @@ namespace nikstra.CoreShopping.Web.Tests
     // https://github.com/aspnet/Mvc/blob/dev/src/Microsoft.AspNetCore.Mvc.Core/ControllerBase.cs
     // https://github.com/aspnet/Mvc/blob/dev/src/Microsoft.AspNetCore.Mvc.Core/Routing/UrlHelper.cs
 
+    [TestFixture]
     public abstract class ControllerTestBase
     {
         protected Uri _uri;
@@ -112,7 +115,9 @@ namespace nikstra.CoreShopping.Web.Tests
             httpContext.Request.Protocol = "HTTP/1.1";
             httpContext.Request.Scheme = _scheme;
 
-            //httpContext.RequestServices
+            httpContext.RequestServices = Substitute.For<IServiceProvider>();
+            httpContext.RequestServices.GetService(typeof(IAuthenticationService))
+                .Returns(Substitute.For<IAuthenticationService>());
 
             httpContext.Session = Substitute.For<ISession>();
 
@@ -172,6 +177,7 @@ namespace nikstra.CoreShopping.Web.Tests
 
             controller.ControllerContext = SetupControllerContextStub();
             controller.Url = SetupUrlHelperStub(controller.ControllerContext, "http://localhost/controller/action");
+            controller.TempData = new TempDataDictionary(controller.HttpContext, Substitute.For<ITempDataProvider>());
 
             return controller;
         }
