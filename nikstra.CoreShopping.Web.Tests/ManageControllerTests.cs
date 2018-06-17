@@ -1,11 +1,9 @@
-﻿using Castle.Core.Logging;
-using Microsoft.AspNetCore.Authentication;
+﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using nikstra.CoreShopping.Web.Controllers;
 using nikstra.CoreShopping.Web.Models;
 using nikstra.CoreShopping.Web.Models.ManageViewModels;
@@ -15,7 +13,6 @@ using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Security.Claims;
-using System.Text;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
 
@@ -37,15 +34,18 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public async Task GetIndex_SuccessfullyReturnsViewAndModel_WhenUserExists()
         {
+            // Arrange
             var userManager = CreateUserManagerStub();
             userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
                 .Returns(Task.FromResult(CreateGoodApplicationUser()));
-
             var signInManager = CreateSignInManagerStub(userManager);
+
             var controller = CreateControllerInstance(signInManager);
 
+            // Act
             var result = await controller.Index();
 
+            // Assert
             Assert.That(result, Is.InstanceOf<ViewResult>());
             Assert.That(((result as ViewResult).Model as IndexViewModel)?.Username, Is.EqualTo("user@domain.tld"));
         }
@@ -53,18 +53,21 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public void GetIndex_ThrowsAnApplicationException_WhenUserDoesNotExist()
         {
+            // Arrange
             var userManager = CreateUserManagerStub();
             userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
                 .Returns(Task.FromResult((ApplicationUser)null));
-
             var signInManager = CreateSignInManagerStub(userManager);
+
             var controller = CreateControllerInstance(signInManager);
 
+            // Act
             async Task Act()
             {
                 var result = await controller.Index();
             }
 
+            // Assert
             var ex = Assert.ThrowsAsync<ApplicationException>(Act);
             Assert.That(ex.Message, Does.StartWith("Unable to load user with ID"));
         }
@@ -72,18 +75,18 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public async Task PostIndex_UpdatesUserProfile_WhenModelDataDiffers()
         {
+            // Arrange
             var userManager = CreateUserManagerStub();
             userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
                 .Returns(Task.FromResult(CreateGoodApplicationUser()));
-
             userManager.SetEmailAsync(Arg.Any<ApplicationUser>(), Arg.Any<string>())
                 .Returns(IdentityResult.Success);
-
             userManager.SetPhoneNumberAsync(Arg.Any<ApplicationUser>(), Arg.Any<string>())
                 .Returns(IdentityResult.Success);
-
             var signInManager = CreateSignInManagerStub(userManager);
+
             var controller = CreateControllerInstance(signInManager);
+
             var model = new IndexViewModel
             {
                 Username = "user@domain.new",
@@ -93,8 +96,10 @@ namespace nikstra.CoreShopping.Web.Tests
                 StatusMessage = ""
             };
 
+            // Act
             var result = await controller.Index(model);
 
+            // Assert
             Assert.That(result, Is.InstanceOf<RedirectToActionResult>());
             Assert.That((result as RedirectToActionResult).ActionName, Is.EqualTo(nameof(ManageController.Index)));
             Assert.That(controller.StatusMessage, Is.EqualTo("Your profile has been updated"));
@@ -103,19 +108,18 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public async Task PostIndex_ReturnsViewAndModel_WhenModelStateIsNotValid()
         {
+            // Arrange
             var userManager = CreateUserManagerStub();
             userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
                 .Returns(Task.FromResult(CreateGoodApplicationUser()));
-
             userManager.SetEmailAsync(Arg.Any<ApplicationUser>(), Arg.Any<string>())
                 .Returns(IdentityResult.Success);
-
             userManager.SetPhoneNumberAsync(Arg.Any<ApplicationUser>(), Arg.Any<string>())
                 .Returns(IdentityResult.Success);
-
             var signInManager = CreateSignInManagerStub(userManager);
+
             var controller = CreateControllerInstance(signInManager);
-            controller.ModelState.AddModelError("","");
+            controller.ModelState.AddModelError("", "");
 
             var model = new IndexViewModel
             {
@@ -126,8 +130,10 @@ namespace nikstra.CoreShopping.Web.Tests
                 StatusMessage = ""
             };
 
+            // Act
             var result = await controller.Index(model);
 
+            // Assert
             Assert.That(result, Is.InstanceOf<ViewResult>());
             Assert.That(((result as ViewResult).Model as IndexViewModel)?.Username, Is.EqualTo("user@domain.tld"));
         }
@@ -135,19 +141,23 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public void PostIndex_ThrowsAnApplicationException_WhenUserDoesNotExist()
         {
+            // Arrange
             var userManager = CreateUserManagerStub();
             userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
                 .Returns(Task.FromResult((ApplicationUser)null));
-
             var signInManager = CreateSignInManagerStub(userManager);
+
             var controller = CreateControllerInstance(signInManager);
+
             var model = new IndexViewModel();
 
+            // Act
             async Task Act()
             {
                 var result = await controller.Index(model);
             }
 
+            // Assert
             var ex = Assert.ThrowsAsync<ApplicationException>(Act);
             Assert.That(ex.Message, Does.StartWith("Unable to load user with ID"));
         }
@@ -155,15 +165,16 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public void PostIndex_ThrowsAnApplicationException_WhenFailingToUpdateEmail()
         {
+            // Arrange
             var userManager = CreateUserManagerStub();
             userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
                 .Returns(Task.FromResult(CreateGoodApplicationUser()));
-
             userManager.SetEmailAsync(Arg.Any<ApplicationUser>(), Arg.Any<string>())
                 .Returns(new IdentityResult());
-
             var signInManager = CreateSignInManagerStub(userManager);
+
             var controller = CreateControllerInstance(signInManager);
+
             var model = new IndexViewModel
             {
                 Username = "user@domain.tld",
@@ -173,11 +184,13 @@ namespace nikstra.CoreShopping.Web.Tests
                 StatusMessage = ""
             };
 
+            // Act
             async Task Act()
             {
                 var result = await controller.Index(model);
             }
 
+            // Assert
             var ex = Assert.ThrowsAsync<ApplicationException>(Act);
             Assert.That(ex.Message, Does.StartWith("Unexpected error occurred setting email for user with ID"));
         }
@@ -185,18 +198,18 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public void PostIndex_ThrowsAnApplicationException_WhenFailingToUpdatePhoneNumber()
         {
+            // Arrange
             var userManager = CreateUserManagerStub();
             userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
                 .Returns(Task.FromResult(CreateGoodApplicationUser()));
-
             userManager.SetEmailAsync(Arg.Any<ApplicationUser>(), Arg.Any<string>())
                 .Returns(IdentityResult.Success);
-
             userManager.SetPhoneNumberAsync(Arg.Any<ApplicationUser>(), Arg.Any<string>())
                 .Returns(new IdentityResult());
-
             var signInManager = CreateSignInManagerStub(userManager);
+
             var controller = CreateControllerInstance(signInManager);
+
             var model = new IndexViewModel
             {
                 Username = "user@domain.tld",
@@ -206,11 +219,13 @@ namespace nikstra.CoreShopping.Web.Tests
                 StatusMessage = ""
             };
 
+            // Act
             async Task Act()
             {
                 var result = await controller.Index(model);
             }
 
+            // Assert
             var ex = Assert.ThrowsAsync<ApplicationException>(Act);
             Assert.That(ex.Message, Does.StartWith("Unexpected error occurred setting phone number for user with ID"));
         }
@@ -220,14 +235,14 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public async Task PostSendVerificationEmail_SuccessfullySendsEmail_WhenUserExists()
         {
+            // Arrange
             var userManager = CreateUserManagerStub();
             userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
                 .Returns(Task.FromResult(CreateGoodApplicationUser()));
-
             userManager.GenerateEmailConfirmationTokenAsync(Arg.Any<ApplicationUser>())
                 .Returns(Task.FromResult("token"));
-
             var signInManager = CreateSignInManagerStub(userManager);
+
             var controller = CreateControllerInstance(signInManager);
             controller.ControllerContext = new ControllerContext();
             controller.ControllerContext.HttpContext = new DefaultHttpContext();
@@ -235,6 +250,7 @@ namespace nikstra.CoreShopping.Web.Tests
             controller.Url = Substitute.For<IUrlHelper>();
             controller.Url.EmailConfirmationLink(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
                 .Returns("dummy url");
+
             var model = new IndexViewModel
             {
                 Username = "user@domain.tld",
@@ -244,9 +260,10 @@ namespace nikstra.CoreShopping.Web.Tests
                 StatusMessage = ""
             };
 
-
+            // Act
             var result = await controller.SendVerificationEmail(model);
 
+            // Assert
             Assert.That(result, Is.InstanceOf<RedirectToActionResult>());
             Assert.That((result as RedirectToActionResult).ActionName, Is.EqualTo(nameof(ManageController.Index)));
             Assert.That(controller.StatusMessage, Is.EqualTo("Verification email sent. Please check your email."));
@@ -255,13 +272,15 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public async Task PostSendVerificationEmail_ReturnsViewAndModel_WhenModelStateIsNotValid()
         {
+            // Arrange
             var userManager = CreateUserManagerStub();
             userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
                 .Returns(Task.FromResult(CreateGoodApplicationUser()));
-
             var signInManager = CreateSignInManagerStub(userManager);
+
             var controller = CreateControllerInstance(signInManager);
             controller.ModelState.AddModelError("", "");
+
             var model = new IndexViewModel
             {
                 Username = "user@domain.tld",
@@ -271,9 +290,10 @@ namespace nikstra.CoreShopping.Web.Tests
                 StatusMessage = ""
             };
 
-
+            // Act
             var result = await controller.SendVerificationEmail(model);
 
+            // Assert
             Assert.That(result, Is.InstanceOf<ViewResult>());
             Assert.That(((result as ViewResult).Model as IndexViewModel)?.Username, Is.EqualTo("user@domain.tld"));
         }
@@ -281,19 +301,23 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public void PostSendVerificationEmail_ThrowsAnApplicationException_WhenUserDoesNotExist()
         {
+            // Arrange
             var userManager = CreateUserManagerStub();
             userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
                 .Returns(Task.FromResult((ApplicationUser)null));
-
             var signInManager = CreateSignInManagerStub(userManager);
+
             var controller = CreateControllerInstance(signInManager);
+
             var model = new IndexViewModel();
 
+            // Act
             async Task Act()
             {
                 var result = await controller.SendVerificationEmail(model);
             }
 
+            // Assert
             var ex = Assert.ThrowsAsync<ApplicationException>(Act);
             Assert.That(ex.Message, Does.StartWith("Unable to load user with ID"));
         }
@@ -303,18 +327,20 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public async Task GetChangePassword_RedirectsToSetPassword_WhenUserDoesNotHaveAPassword()
         {
+            // Arrange
             var userManager = CreateUserManagerStub();
             userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
                 .Returns(Task.FromResult(CreateGoodApplicationUser()));
-
             userManager.HasPasswordAsync(Arg.Any<ApplicationUser>())
                 .Returns(false);
-
             var signInManager = CreateSignInManagerStub(userManager);
+
             var controller = CreateControllerInstance(signInManager);
 
+            // Act
             var result = await controller.ChangePassword();
 
+            // Assert
             Assert.That(result, Is.InstanceOf<RedirectToActionResult>());
             Assert.That((result as RedirectToActionResult).ActionName, Is.EqualTo(nameof(ManageController.SetPassword)));
         }
@@ -322,19 +348,22 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public async Task GetChangePassword_ReturnsViewAndModel_WhenUserHasAPassword()
         {
+            // Arrange
             var userManager = CreateUserManagerStub();
             userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
                 .Returns(Task.FromResult(CreateGoodApplicationUser()));
-
             userManager.HasPasswordAsync(Arg.Any<ApplicationUser>())
                 .Returns(true);
-
             var signInManager = CreateSignInManagerStub(userManager);
+
             var controller = CreateControllerInstance(signInManager);
+
             var model = new ChangePasswordViewModel();
 
+            // Act
             var result = await controller.ChangePassword();
 
+            // Assert
             Assert.That(result, Is.InstanceOf<ViewResult>());
             Assert.That((result as ViewResult).Model, Is.InstanceOf<ChangePasswordViewModel>());
         }
@@ -342,18 +371,21 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public void GetChangePassword_ThrowsAnApplicationException_WhenUserDoesNotExist()
         {
+            // Arrange
             var userManager = CreateUserManagerStub();
             userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
                 .Returns(Task.FromResult((ApplicationUser)null));
-
             var signInManager = CreateSignInManagerStub(userManager);
+
             var controller = CreateControllerInstance(signInManager);
 
+            // Act
             async Task Act()
             {
                 var result = await controller.ChangePassword();
             }
 
+            // Assert
             var ex = Assert.ThrowsAsync<ApplicationException>(Act);
             Assert.That(ex.Message, Does.StartWith("Unable to load user with ID"));
         }
@@ -361,12 +393,12 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public async Task PostChangePassword_RedirectsToChangePassword_WhenPasswordSuccessfullyChanged()
         {
+            // Arrange
             var userManager = CreateUserManagerStub();
             userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
                 .Returns(Task.FromResult(CreateGoodApplicationUser()));
             userManager.ChangePasswordAsync(Arg.Any<ApplicationUser>(), Arg.Any<string>(), Arg.Any<string>())
                 .Returns(Task.FromResult(IdentityResult.Success));
-
             var signInManager = CreateSignInManagerStub(userManager);
             signInManager.SignInAsync(Arg.Any<ApplicationUser>(), isPersistent: false)
                 .Returns(Task.FromResult(0));
@@ -378,8 +410,10 @@ namespace nikstra.CoreShopping.Web.Tests
                 OldPassword = "password"
             };
 
+            // Act
             var result = await controller.ChangePassword(model);
 
+            // Assert
             Assert.That(result, Is.InstanceOf<RedirectToActionResult>());
             Assert.That((result as RedirectToActionResult).ActionName, Is.EqualTo(nameof(ManageController.ChangePassword)));
             Assert.That(controller.StatusMessage, Is.EqualTo("Your password has been changed."));
@@ -388,13 +422,14 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public async Task PostChangePassword_ReturnsViewAndModel_WhenFailingToChangePassword()
         {
+            // Arrange
             var userManager = CreateUserManagerStub();
             userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
                 .Returns(Task.FromResult(CreateGoodApplicationUser()));
             userManager.ChangePasswordAsync(Arg.Any<ApplicationUser>(), Arg.Any<string>(), Arg.Any<string>())
                 .Returns(Task.FromResult(IdentityResult.Failed()));
-
             var signInManager = CreateSignInManagerStub(userManager);
+
             var controller = CreateControllerInstance(signInManager);
 
             var model = new ChangePasswordViewModel
@@ -402,8 +437,10 @@ namespace nikstra.CoreShopping.Web.Tests
                 OldPassword = "password"
             };
 
+            // Act
             var result = await controller.ChangePassword(model);
 
+            // Assert
             Assert.That(result, Is.InstanceOf<ViewResult>());
             Assert.That(((result as ViewResult).Model as ChangePasswordViewModel)?.OldPassword, Is.EqualTo("password"));
         }
@@ -411,20 +448,24 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public async Task PostChangePassword_ReturnsViewAndModel_WhenModelStateIsNotValid()
         {
+            // Arrange
             var userManager = CreateUserManagerStub();
             userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
                 .Returns(Task.FromResult(CreateGoodApplicationUser()));
-
             var signInManager = CreateSignInManagerStub(userManager);
+
             var controller = CreateControllerInstance(signInManager);
             controller.ModelState.AddModelError("", "");
+
             var model = new ChangePasswordViewModel
             {
                 OldPassword = "password"
             };
 
+            // Act
             var result = await controller.ChangePassword(model);
 
+            // Assert
             Assert.That(result, Is.InstanceOf<ViewResult>());
             Assert.That(((result as ViewResult).Model as ChangePasswordViewModel)?.OldPassword, Is.EqualTo("password"));
         }
@@ -432,19 +473,23 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public void PostChangePassword_ThrowsAnApplicationException_WhenUserDoesNotExist()
         {
+            // Arrange
             var userManager = CreateUserManagerStub();
             userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
                 .Returns(Task.FromResult((ApplicationUser)null));
-
             var signInManager = CreateSignInManagerStub(userManager);
+
             var controller = CreateControllerInstance(signInManager);
+
             var model = new ChangePasswordViewModel();
 
+            // Act
             async Task Act()
             {
                 var result = await controller.ChangePassword(model);
             }
 
+            // Assert
             var ex = Assert.ThrowsAsync<ApplicationException>(Act);
             Assert.That(ex.Message, Does.StartWith("Unable to load user with ID"));
         }
@@ -454,19 +499,21 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public async Task GetSetPassword_SuccessfullyReturnsViewAndModel_WhenUserDoesNotHaveAPassword()
         {
+            // Arrange
             var userManager = CreateUserManagerStub();
             userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
                 .Returns(Task.FromResult(CreateGoodApplicationUser()));
-
             userManager.HasPasswordAsync(Arg.Any<ApplicationUser>())
                 .Returns(Task.FromResult(false));
-
             var signInManager = CreateSignInManagerStub(userManager);
+
             var controller = CreateControllerInstance(signInManager);
             controller.StatusMessage = "message";
 
+            // Act
             var result = await controller.SetPassword();
 
+            // Assert
             Assert.That(result, Is.InstanceOf<ViewResult>());
             Assert.That(((result as ViewResult).Model as SetPasswordViewModel).StatusMessage, Is.EqualTo("message"));
         }
@@ -474,18 +521,20 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public async Task GetSetPassword_RedirectsToChangePassword_WhenUserHasAPassword()
         {
+            // Arrange
             var userManager = CreateUserManagerStub();
             userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
                 .Returns(Task.FromResult(CreateGoodApplicationUser()));
-
             userManager.HasPasswordAsync(Arg.Any<ApplicationUser>())
                 .Returns(Task.FromResult(true));
-
             var signInManager = CreateSignInManagerStub(userManager);
+
             var controller = CreateControllerInstance(signInManager);
 
+            // Act
             var result = await controller.SetPassword();
 
+            // Assert
             Assert.That(result, Is.InstanceOf<RedirectToActionResult>());
             Assert.That((result as RedirectToActionResult).ActionName, Is.EqualTo(nameof(ManageController.ChangePassword)));
         }
@@ -493,18 +542,21 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public void GetSetPassword_ThrowsAnApplicationException_WhenUserDoesNotExist()
         {
+            // Arrange
             var userManager = CreateUserManagerStub();
             userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
                 .Returns(Task.FromResult((ApplicationUser)null));
-
             var signInManager = CreateSignInManagerStub(userManager);
+
             var controller = CreateControllerInstance(signInManager);
 
+            // Act
             async Task Act()
             {
                 var result = await controller.SetPassword();
             }
 
+            // Assert
             var ex = Assert.ThrowsAsync<ApplicationException>(Act);
             Assert.That(ex.Message, Does.StartWith("Unable to load user with ID"));
         }
@@ -512,12 +564,12 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public async Task PostSetPassword_RedirectsToSetPassword_WhenPasswordIsSuccessfullySet()
         {
+            // Arrange
             var userManager = CreateUserManagerStub();
             userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
                 .Returns(Task.FromResult(CreateGoodApplicationUser()));
             userManager.AddPasswordAsync(Arg.Any<ApplicationUser>(), Arg.Any<string>()).
                 Returns(Task.FromResult(IdentityResult.Success));
-
             var signInManager = CreateSignInManagerStub(userManager);
             signInManager.SignInAsync(Arg.Any<ApplicationUser>(), isPersistent: false)
                 .Returns(Task.FromResult(0));
@@ -525,8 +577,10 @@ namespace nikstra.CoreShopping.Web.Tests
             var controller = CreateControllerInstance(signInManager);
             var model = new SetPasswordViewModel();
 
+            // Act
             var result = await controller.SetPassword(model);
 
+            // Assert
             Assert.That(result, Is.InstanceOf<RedirectToActionResult>());
             Assert.That((result as RedirectToActionResult).ActionName, Is.EqualTo(nameof(ManageController.SetPassword)));
             Assert.That(controller.StatusMessage, Is.EqualTo("Your password has been set."));
@@ -535,17 +589,21 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public async Task PostSetPassword_ReturnsViewAndModel_WhenModelStateIsNotValid()
         {
+            // Arrange
             var userManager = CreateUserManagerStub();
             userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
                 .Returns(Task.FromResult(CreateGoodApplicationUser()));
-
             var signInManager = CreateSignInManagerStub(userManager);
+
             var controller = CreateControllerInstance(signInManager);
             controller.ModelState.AddModelError("", "");
+
             var model = new SetPasswordViewModel();
 
+            // Act
             var result = await controller.SetPassword(model);
 
+            // Assert
             Assert.That(result, Is.InstanceOf<ViewResult>());
             Assert.That((result as ViewResult).Model, Is.InstanceOf<SetPasswordViewModel>());
         }
@@ -553,19 +611,23 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public async Task PostSetPassword_ReturnsViewAndModel_WhenPasswordCouldNotBeSet()
         {
+            // Arrange
             var userManager = CreateUserManagerStub();
             userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
                 .Returns(Task.FromResult(CreateGoodApplicationUser()));
             userManager.AddPasswordAsync(Arg.Any<ApplicationUser>(), Arg.Any<string>()).
                 Returns(Task.FromResult(IdentityResult.Failed(
                     new IdentityError { Code = "code", Description = "description" })));
-
             var signInManager = CreateSignInManagerStub(userManager);
+
             var controller = CreateControllerInstance(signInManager);
+
             var model = new SetPasswordViewModel();
 
+            // Act
             var result = await controller.SetPassword(model);
 
+            // Assert
             Assert.That(result, Is.InstanceOf<ViewResult>());
             Assert.That((result as ViewResult).ViewData.ModelState.ErrorCount, Is.GreaterThan(0));
         }
@@ -573,19 +635,23 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public void PostSetPassword_ThrowsAnApplicationException_WhenUserDoesNotExist()
         {
+            // Arrange
             var userManager = CreateUserManagerStub();
             userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
                 .Returns(Task.FromResult((ApplicationUser)null));
-
             var signInManager = CreateSignInManagerStub(userManager);
+
             var controller = CreateControllerInstance(signInManager);
+
             var model = new SetPasswordViewModel();
 
+            // Act
             async Task Act()
             {
                 var result = await controller.SetPassword(model);
             }
 
+            // Assert
             var ex = Assert.ThrowsAsync<ApplicationException>(Act);
             Assert.That(ex.Message, Does.StartWith("Unable to load user with ID"));
         }
@@ -595,6 +661,7 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public async Task GetExternalLogins_ReturnsViewAndModel_WhenUserHasNoExternalLogins()
         {
+            // Arrange
             var userManager = CreateUserManagerStub();
             userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
                 .Returns(Task.FromResult(CreateGoodApplicationUser()));
@@ -604,16 +671,18 @@ namespace nikstra.CoreShopping.Web.Tests
                 );
             userManager.HasPasswordAsync(Arg.Any<ApplicationUser>())
                 .Returns(Task.FromResult(true));
-
             var signInManager = CreateSignInManagerStub(userManager);
             signInManager.GetExternalAuthenticationSchemesAsync()
                 .Returns(
                     Task.FromResult<IEnumerable<AuthenticationScheme>>(new List<AuthenticationScheme>())
                 );
+
             var controller = CreateControllerInstance(signInManager);
 
+            // Act
             var result = await controller.ExternalLogins();
 
+            // Assert
             Assert.That(result, Is.InstanceOf<ViewResult>());
             Assert.That(((result as ViewResult).Model as ExternalLoginsViewModel).StatusMessage, Is.EqualTo(controller.StatusMessage));
             Assert.That(((result as ViewResult).Model as ExternalLoginsViewModel).ShowRemoveButton, Is.True);
@@ -622,6 +691,7 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public async Task GetExternalLogins_ReturnsViewAndModel_WhenUserHasExternalLogins()
         {
+            // Arrange
             var userManager = CreateUserManagerStub();
             userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
                 .Returns(Task.FromResult(CreateGoodApplicationUser()));
@@ -631,7 +701,6 @@ namespace nikstra.CoreShopping.Web.Tests
                 );
             userManager.HasPasswordAsync(Arg.Any<ApplicationUser>())
                 .Returns(Task.FromResult(true));
-
             var signInManager = CreateSignInManagerStub(userManager);
             signInManager.GetExternalAuthenticationSchemesAsync()
                 .Returns(
@@ -641,10 +710,13 @@ namespace nikstra.CoreShopping.Web.Tests
                             new AuthenticationScheme("name", "displayName", Substitute.For<IAuthenticationHandler>().GetType())
                         })
                 );
+
             var controller = CreateControllerInstance(signInManager);
 
+            // Act
             var result = await controller.ExternalLogins();
 
+            // Assert
             Assert.That(result, Is.InstanceOf<ViewResult>());
             Assert.That(((result as ViewResult).Model as ExternalLoginsViewModel).StatusMessage, Is.EqualTo(controller.StatusMessage));
             Assert.That(((result as ViewResult).Model as ExternalLoginsViewModel).ShowRemoveButton, Is.True);
@@ -653,6 +725,7 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public async Task GetExternalLogins_SetsModelShowRemoveButtonToFalse_WhenUserHasOnlyOneLogin()
         {
+            // Arrange
             var userManager = CreateUserManagerStub();
             userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
                 .Returns(Task.FromResult(CreateGoodApplicationUser()));
@@ -662,17 +735,19 @@ namespace nikstra.CoreShopping.Web.Tests
                 );
             userManager.HasPasswordAsync(Arg.Any<ApplicationUser>())
                 .Returns(Task.FromResult(false));
-
             var signInManager = CreateSignInManagerStub(userManager);
             signInManager.GetExternalAuthenticationSchemesAsync()
                 .Returns(
                     Task.FromResult<IEnumerable<AuthenticationScheme>>(
                         new List<AuthenticationScheme>())
                 );
+
             var controller = CreateControllerInstance(signInManager);
 
+            // Act
             var result = await controller.ExternalLogins();
 
+            // Assert
             Assert.That(result, Is.InstanceOf<ViewResult>());
             Assert.That(((result as ViewResult).Model as ExternalLoginsViewModel).StatusMessage, Is.EqualTo(controller.StatusMessage));
             Assert.That(((result as ViewResult).Model as ExternalLoginsViewModel).ShowRemoveButton, Is.False);
@@ -681,18 +756,21 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public void GetExternalLogins_ThrowsAnApplicationException_WhenUserDoesNotExist()
         {
+            // Arrange
             var userManager = CreateUserManagerStub();
             userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
                 .Returns(Task.FromResult((ApplicationUser)null));
-
             var signInManager = CreateSignInManagerStub(userManager);
+
             var controller = CreateControllerInstance(signInManager);
 
+            // Act
             async Task Act()
             {
                 var result = await controller.ExternalLogins();
             }
 
+            // Assert
             var ex = Assert.ThrowsAsync<ApplicationException>(Act);
             Assert.That(ex.Message, Does.StartWith("Unable to load user with ID"));
         }
@@ -702,12 +780,13 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public async Task PostLinkLogin_ReturnsChallengeResult_WhenSuccessful()
         {
+            // Arrange
             var userManager = CreateUserManagerStub();
-
             var signInManager = CreateSignInManagerStub(userManager);
             signInManager.ConfigureExternalAuthenticationProperties(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
                 .Returns(new AuthenticationProperties());
 
+            // TODO: Refactor HttpContext stuff.
             var controller = CreateControllerInstance(signInManager);
             controller.ControllerContext.HttpContext = new DefaultHttpContext();
             controller.HttpContext.RequestServices = Substitute.For<IServiceProvider>();
@@ -717,8 +796,10 @@ namespace nikstra.CoreShopping.Web.Tests
             controller.Url.EmailConfirmationLink(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
                 .Returns("dummy url");
 
+            // Act
             var result = await controller.LinkLogin("provider");
 
+            // Assert
             Assert.That(result, Is.InstanceOf<ChallengeResult>());
             Assert.That((result as ChallengeResult).Properties, Is.InstanceOf<AuthenticationProperties>());
             Assert.That((result as ChallengeResult).AuthenticationSchemes[0], Is.EqualTo("provider"));
@@ -729,17 +810,18 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public async Task GetLinkLoginCallback_RedirectsToExternalLogins_WhenLoginIsSuccessfullyAdded()
         {
+            // Arrange
             var userManager = CreateUserManagerStub();
             userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
                 .Returns(Task.FromResult(CreateGoodApplicationUser()));
             userManager.AddLoginAsync(Arg.Any<ApplicationUser>(), Arg.Any<ExternalLoginInfo>())
                 .Returns(Task.FromResult(IdentityResult.Success));
-
             var signInManager = CreateSignInManagerStub(userManager);
             signInManager.GetExternalLoginInfoAsync(Arg.Any<string>())
                 .Returns(Task.FromResult(Substitute.For<ExternalLoginInfo>(
                     new ClaimsPrincipal(), "loginProvider", "providerKey", "displayName")));
 
+            // TODO: Refactor HttpContext stuff.
             var controller = CreateControllerInstance(signInManager);
             controller.ControllerContext.HttpContext = new DefaultHttpContext();
             controller.HttpContext.RequestServices = Substitute.For<IServiceProvider>();
@@ -747,8 +829,10 @@ namespace nikstra.CoreShopping.Web.Tests
                 .Returns(Substitute.For<IAuthenticationService>());
             controller.Url = Substitute.For<IUrlHelper>();
 
+            // Act
             var result = await controller.LinkLoginCallback();
 
+            // Assert
             Assert.That(result, Is.InstanceOf<RedirectToActionResult>());
             Assert.That((result as RedirectToActionResult).ActionName, Is.EqualTo(nameof(ManageController.ExternalLogins)));
             Assert.That(controller.StatusMessage, Is.EqualTo("The external login was added."));
@@ -757,18 +841,21 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public void GetLinkLoginCallback_ThrowsAnApplicationException_WhenUserDoesNotExist()
         {
+            // Arrange
             var userManager = CreateUserManagerStub();
             userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
                 .Returns(Task.FromResult((ApplicationUser)null));
-
             var signInManager = CreateSignInManagerStub(userManager);
+
             var controller = CreateControllerInstance(signInManager);
 
+            // Act
             async Task Act()
             {
                 var result = await controller.LinkLoginCallback();
             }
 
+            // Assert
             var ex = Assert.ThrowsAsync<ApplicationException>(Act);
             Assert.That(ex.Message, Does.StartWith("Unable to load user with ID"));
         }
@@ -776,20 +863,23 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public void GetLinkLoginCallback_ThrowsAnApplicationException_WhenFailingToGetExternalLoginInfo()
         {
+            // Arrange
             var userManager = CreateUserManagerStub();
             userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
                 .Returns(Task.FromResult(CreateGoodApplicationUser()));
-
             var signInManager = CreateSignInManagerStub(userManager);
             signInManager.GetExternalLoginInfoAsync(Arg.Any<string>())
                 .Returns((ExternalLoginInfo)null);
+
             var controller = CreateControllerInstance(signInManager);
 
+            // Act
             async Task Act()
             {
                 var result = await controller.LinkLoginCallback();
             }
 
+            // Assert
             var ex = Assert.ThrowsAsync<ApplicationException>(Act);
             Assert.That(ex.Message, Does.StartWith("Unexpected error occurred loading external login info for user with ID"));
         }
@@ -797,23 +887,26 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public void GetLinkLoginCallback_ThrowsAnApplicationException_WhenFailingToAddLogin()
         {
+            // Arrange
             var userManager = CreateUserManagerStub();
             userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
                 .Returns(Task.FromResult(CreateGoodApplicationUser()));
             userManager.AddLoginAsync(Arg.Any<ApplicationUser>(), Arg.Any<ExternalLoginInfo>())
                 .Returns(Task.FromResult(IdentityResult.Failed(new IdentityError { Code = "code", Description = "description" })));
-
             var signInManager = CreateSignInManagerStub(userManager);
             signInManager.GetExternalLoginInfoAsync(Arg.Any<string>())
                 .Returns(Task.FromResult(Substitute.For<ExternalLoginInfo>(
                     new ClaimsPrincipal(), "loginProvider", "providerKey", "displayName")));
+
             var controller = CreateControllerInstance(signInManager);
 
+            // Act
             async Task Act()
             {
                 var result = await controller.LinkLoginCallback();
             }
 
+            // Assert
             var ex = Assert.ThrowsAsync<ApplicationException>(Act);
             Assert.That(ex.Message, Does.StartWith("Unexpected error occurred adding external login for user with ID"));
         }
@@ -823,20 +916,24 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public async Task PostRemoveLogin_RedirectsToExternalLogins_WhenLoginIsRemoved()
         {
+            // Arrange
             var userManager = CreateUserManagerStub();
             userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
                 .Returns(Task.FromResult(CreateGoodApplicationUser()));
             userManager.RemoveLoginAsync(Arg.Any<ApplicationUser>(), Arg.Any<string>(), Arg.Any<string>())
                 .Returns(Task.FromResult(IdentityResult.Success));
-
             var signInManager = CreateSignInManagerStub(userManager);
             signInManager.SignInAsync(Arg.Any<ApplicationUser>(), Arg.Any<bool>())
                 .Returns(Task.FromResult(0));
+
             var controller = CreateControllerInstance(signInManager);
+
             var model = new RemoveLoginViewModel();
 
+            // Act
             var result = await controller.RemoveLogin(model);
 
+            // Assert
             Assert.That(result, Is.InstanceOf<RedirectToActionResult>());
             Assert.That((result as RedirectToActionResult).ActionName, Is.EqualTo(nameof(ManageController.ExternalLogins)));
             Assert.That(controller.StatusMessage, Is.EqualTo("The external login was removed."));
@@ -845,19 +942,23 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public void PostRemoveLogin_ThrowsAnApplicationException_WhenUserDoesNotExist()
         {
+            // Arrange
             var userManager = CreateUserManagerStub();
             userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
                 .Returns(Task.FromResult((ApplicationUser)null));
-
             var signInManager = CreateSignInManagerStub(userManager);
+
             var controller = CreateControllerInstance(signInManager);
+
             var model = new RemoveLoginViewModel();
 
+            // Act
             async Task Act()
             {
                 var result = await controller.RemoveLogin(model);
             }
 
+            // Assert
             var ex = Assert.ThrowsAsync<ApplicationException>(Act);
             Assert.That(ex.Message, Does.StartWith("Unable to load user with ID"));
         }
@@ -865,21 +966,25 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public void PostRemoveLogin_ThrowsAnApplicationException_WhenFailingToRemoveLogin()
         {
+            // Arrange
             var userManager = CreateUserManagerStub();
             userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
                 .Returns(Task.FromResult(CreateGoodApplicationUser()));
             userManager.RemoveLoginAsync(Arg.Any<ApplicationUser>(), Arg.Any<string>(), Arg.Any<string>())
                 .Returns(Task.FromResult(IdentityResult.Failed(new IdentityError { Code = "code", Description = "description" })));
-
             var signInManager = CreateSignInManagerStub(userManager);
+
             var controller = CreateControllerInstance(signInManager);
+
             var model = new RemoveLoginViewModel();
 
+            // Act
             async Task Act()
             {
                 var result = await controller.RemoveLogin(model);
             }
 
+            // Assert
             var ex = Assert.ThrowsAsync<ApplicationException>(Act);
             Assert.That(ex.Message, Does.StartWith("Unexpected error occurred removing external login for user with ID"));
         }
@@ -889,6 +994,7 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public async Task GetTwoFactorAuthentication_ReturnsViewAndModel_WhenUserExists()
         {
+            // Arrange
             var userManager = CreateUserManagerStub();
             userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
                 .Returns(Task.FromResult(CreateGoodApplicationUser()));
@@ -896,12 +1002,14 @@ namespace nikstra.CoreShopping.Web.Tests
                 .Returns(Task.FromResult("key"));
             userManager.CountRecoveryCodesAsync(Arg.Any<ApplicationUser>())
                 .Returns(Task.FromResult(1));
-
             var signInManager = CreateSignInManagerStub(userManager);
+
             var controller = CreateControllerInstance(signInManager);
 
+            // Act
             var result = await controller.TwoFactorAuthentication();
 
+            // Assert
             Assert.That(result, Is.InstanceOf<ViewResult>());
             Assert.That((result as ViewResult).Model, Is.InstanceOf<TwoFactorAuthenticationViewModel>());
             Assert.That(((result as ViewResult).Model as TwoFactorAuthenticationViewModel).HasAuthenticator, Is.True);
@@ -911,18 +1019,21 @@ namespace nikstra.CoreShopping.Web.Tests
 
         public void GetTwoFactorAuthentication_ThrowsAnApplicationException_WhenUserDoesNotExist()
         {
+            // Arrange
             var userManager = CreateUserManagerStub();
             userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
                 .Returns(Task.FromResult((ApplicationUser)null));
-
             var signInManager = CreateSignInManagerStub(userManager);
+
             var controller = CreateControllerInstance(signInManager);
 
+            // Act
             async Task Act()
             {
                 var result = await controller.TwoFactorAuthentication();
             }
 
+            // Assert
             var ex = Assert.ThrowsAsync<ApplicationException>(Act);
             Assert.That(ex.Message, Does.StartWith("Unable to load user with ID"));
         }
@@ -932,17 +1043,20 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public async Task GetDisable2faWarning_ReturnsView_WhenUserExists()
         {
+            // Arrange
             var user = CreateGoodApplicationUser();
             user.TwoFactorEnabled = true;
             var userManager = CreateUserManagerStub();
             userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
                 .Returns(Task.FromResult(user));
-
             var signInManager = CreateSignInManagerStub(userManager);
+
             var controller = CreateControllerInstance(signInManager);
 
+            // Act
             var result = await controller.Disable2faWarning();
 
+            // Assert
             Assert.That(result, Is.InstanceOf<ViewResult>());
             Assert.That((result as ViewResult).ViewName, Is.EqualTo(nameof(ManageController.Disable2fa)));
         }
@@ -950,18 +1064,21 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public void GetDisable2faWarning_ThrowsAnApplicationException_WhenUserDoesNotExist()
         {
+            // Arrange
             var userManager = CreateUserManagerStub();
             userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
                 .Returns(Task.FromResult((ApplicationUser)null));
-
             var signInManager = CreateSignInManagerStub(userManager);
+
             var controller = CreateControllerInstance(signInManager);
 
+            // Act
             async Task Act()
             {
                 var result = await controller.Disable2faWarning();
             }
 
+            // Assert
             var ex = Assert.ThrowsAsync<ApplicationException>(Act);
             Assert.That(ex.Message, Does.StartWith("Unable to load user with ID"));
         }
@@ -969,18 +1086,21 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public void GetDisable2faWarning_ThrowsAnApplicationException_WhenUserDoesNotHave2FactorAuthEnabled()
         {
+            // Arrange
             var userManager = CreateUserManagerStub();
             userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
                 .Returns(Task.FromResult(CreateGoodApplicationUser()));
-
             var signInManager = CreateSignInManagerStub(userManager);
+
             var controller = CreateControllerInstance(signInManager);
 
+            // Act
             async Task Act()
             {
                 var result = await controller.Disable2faWarning();
             }
 
+            // Assert
             var ex = Assert.ThrowsAsync<ApplicationException>(Act);
             Assert.That(ex.Message, Does.StartWith("Unexpected error occured disabling 2FA for user with ID"));
         }
@@ -990,17 +1110,20 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public async Task PostDisable2fa_RedirectsToTwoFactorAuthentication_WhenUseExists()
         {
+            // Arrange
             var userManager = CreateUserManagerStub();
             userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
                 .Returns(Task.FromResult(CreateGoodApplicationUser()));
             userManager.SetTwoFactorEnabledAsync(Arg.Any<ApplicationUser>(), Arg.Any<bool>())
                 .Returns(Task.FromResult(IdentityResult.Success));
-
             var signInManager = CreateSignInManagerStub(userManager);
+
             var controller = CreateControllerInstance(signInManager);
 
+            // Act
             var result = await controller.Disable2fa();
 
+            // Assert
             Assert.That(result, Is.InstanceOf<RedirectToActionResult>());
             Assert.That((result as RedirectToActionResult).ActionName, Is.EqualTo(nameof(ManageController.TwoFactorAuthentication)));
         }
@@ -1008,18 +1131,21 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public void PostDisable2fa_ThrowsAnApplicationException_WhenUserDoesNotExist()
         {
+            // Arrange
             var userManager = CreateUserManagerStub();
             userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
                 .Returns(Task.FromResult((ApplicationUser)null));
-
             var signInManager = CreateSignInManagerStub(userManager);
+
             var controller = CreateControllerInstance(signInManager);
 
+            // Act
             async Task Act()
             {
                 var result = await controller.Disable2fa();
             }
 
+            // Assert
             var ex = Assert.ThrowsAsync<ApplicationException>(Act);
             Assert.That(ex.Message, Does.StartWith("Unable to load user with ID"));
         }
@@ -1027,20 +1153,23 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public void PostDisable2fa_ThrowsAnApplicationException_WhenFailingToDisable2FactorAuth()
         {
+            // Arrange
             var userManager = CreateUserManagerStub();
             userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
                 .Returns(Task.FromResult(CreateGoodApplicationUser()));
             userManager.SetTwoFactorEnabledAsync(Arg.Any<ApplicationUser>(), Arg.Any<bool>())
                 .Returns(Task.FromResult(IdentityResult.Failed(new IdentityError { Code = "code", Description = "description" })));
-
             var signInManager = CreateSignInManagerStub(userManager);
+
             var controller = CreateControllerInstance(signInManager);
 
+            // Act
             async Task Act()
             {
                 var result = await controller.Disable2fa();
             }
 
+            // Assert
             var ex = Assert.ThrowsAsync<ApplicationException>(Act);
             Assert.That(ex.Message, Does.StartWith("Unexpected error occured disabling 2FA for user with ID"));
         }
@@ -1050,6 +1179,7 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public async Task GetEnableAuthenticator_ReturnsViewAndModel_WhenUserExists()
         {
+            // Arrange
             var userManager = CreateUserManagerStub();
             userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
                 .Returns(Task.FromResult(CreateGoodApplicationUser()));
@@ -1057,12 +1187,14 @@ namespace nikstra.CoreShopping.Web.Tests
                 .Returns(Task.FromResult("key"));
             userManager.ResetAuthenticatorKeyAsync(Arg.Any<ApplicationUser>())
                 .Returns(Task.FromResult(IdentityResult.Success));
-
             var signInManager = CreateSignInManagerStub(userManager);
+
             var controller = CreateControllerInstance(signInManager);
 
+            // Act
             var result = await controller.EnableAuthenticator();
 
+            // Assert
             Assert.That(result, Is.InstanceOf<ViewResult>());
             Assert.That((result as ViewResult).Model, Is.InstanceOf<EnableAuthenticatorViewModel>());
         }
@@ -1070,18 +1202,21 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public void GetEnableAuthenticator_ThrowsAnApplicationException_WhenUserDoesNotExist()
         {
+            // Arrange
             var userManager = CreateUserManagerStub();
             userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
                 .Returns(Task.FromResult((ApplicationUser)null));
-
             var signInManager = CreateSignInManagerStub(userManager);
+
             var controller = CreateControllerInstance(signInManager);
 
+            // Act
             async Task Act()
             {
                 var result = await controller.EnableAuthenticator();
             }
 
+            // Assert
             var ex = Assert.ThrowsAsync<ApplicationException>(Act);
             Assert.That(ex.Message, Does.StartWith("Unable to load user with ID"));
         }
@@ -1089,6 +1224,7 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public async Task PostEnableAuthenticator_RedirectsToShowRecoveryCodes_WhenUserExistsAndTwoFactorTokenIsValid()
         {
+            // Arrange
             var userManager = CreateUserManagerStub();
             userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
                 .Returns(Task.FromResult(CreateGoodApplicationUser()));
@@ -1098,15 +1234,24 @@ namespace nikstra.CoreShopping.Web.Tests
                 .Returns(Task.FromResult(IdentityResult.Success));
             userManager.GenerateNewTwoFactorRecoveryCodesAsync(Arg.Any<ApplicationUser>(), Arg.Any<int>())
                 .Returns(Task.FromResult<IEnumerable<string>>(new List<string> { "1", "2", "3", "4", "5", "6", "7", "8", "9", "10" }));
-
             var signInManager = CreateSignInManagerStub(userManager);
+
+            // TODO: Refactor HttpContext stuff.
             var controller = CreateControllerInstance(signInManager);
             controller.ControllerContext.HttpContext = new DefaultHttpContext();
             controller.TempData = new TempDataDictionary(controller.HttpContext, Substitute.For<ITempDataProvider>());
-            var model = new EnableAuthenticatorViewModel { AuthenticatorUri = "uri", Code = "code", SharedKey = "key" };
 
+            var model = new EnableAuthenticatorViewModel
+            {
+                AuthenticatorUri = "uri",
+                Code = "code",
+                SharedKey = "key"
+            };
+
+            // Act
             var result = await controller.EnableAuthenticator(model);
 
+            // Assert
             Assert.That(result, Is.InstanceOf<RedirectToActionResult>());
             Assert.That((result as RedirectToActionResult).ActionName, Is.EqualTo(nameof(ManageController.ShowRecoveryCodes)));
         }
@@ -1114,6 +1259,7 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public async Task PostEnableAuthenticator_ReturnsViewAndModel_WhenModelStateIsNotValid()
         {
+            // Arrange
             var userManager = CreateUserManagerStub();
             userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
                 .Returns(Task.FromResult(CreateGoodApplicationUser()));
@@ -1121,14 +1267,17 @@ namespace nikstra.CoreShopping.Web.Tests
                 .Returns(Task.FromResult("key"));
             userManager.ResetAuthenticatorKeyAsync(Arg.Any<ApplicationUser>())
                 .Returns(Task.FromResult(IdentityResult.Success));
-
             var signInManager = CreateSignInManagerStub(userManager);
+
             var controller = CreateControllerInstance(signInManager);
             controller.ModelState.AddModelError("", "");
+
             var model = new EnableAuthenticatorViewModel();
 
+            // Act
             var result = await controller.EnableAuthenticator(model);
 
+            // Assert
             Assert.That(result, Is.InstanceOf<ViewResult>());
             Assert.That((result as ViewResult).Model, Is.InstanceOf<EnableAuthenticatorViewModel>());
         }
@@ -1136,6 +1285,7 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public async Task PostEnableAuthenticator_ReturnsViewAndModel_WhenTwoFactorTokenIsNotValid()
         {
+            // Arrange
             var userManager = CreateUserManagerStub();
             userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
                 .Returns(Task.FromResult(CreateGoodApplicationUser()));
@@ -1145,13 +1295,21 @@ namespace nikstra.CoreShopping.Web.Tests
                 .Returns(Task.FromResult("key"));
             userManager.ResetAuthenticatorKeyAsync(Arg.Any<ApplicationUser>())
                 .Returns(Task.FromResult(IdentityResult.Success));
-
             var signInManager = CreateSignInManagerStub(userManager);
-            var controller = CreateControllerInstance(signInManager);
-            var model = new EnableAuthenticatorViewModel { AuthenticatorUri = "uri", Code = "code", SharedKey = "key" };
 
+            var controller = CreateControllerInstance(signInManager);
+
+            var model = new EnableAuthenticatorViewModel
+            {
+                AuthenticatorUri = "uri",
+                Code = "code",
+                SharedKey = "key"
+            };
+
+            // Act
             var result = await controller.EnableAuthenticator(model);
 
+            // Assert
             Assert.That(result, Is.InstanceOf<ViewResult>());
             Assert.That((result as ViewResult).Model, Is.InstanceOf<EnableAuthenticatorViewModel>());
             Assert.That(controller.ModelState["Code"].Errors[0].ErrorMessage, Is.EqualTo("Verification code is invalid."));
@@ -1160,19 +1318,23 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public void PostEnableAuthenticator_ThrowsAnApplicationException_WhenUserDoesNotExist()
         {
+            // Arrange
             var userManager = CreateUserManagerStub();
             userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
                 .Returns(Task.FromResult((ApplicationUser)null));
-
             var signInManager = CreateSignInManagerStub(userManager);
+
             var controller = CreateControllerInstance(signInManager);
+
             var model = new EnableAuthenticatorViewModel();
 
+            // Act
             async Task Act()
             {
                 var result = await controller.EnableAuthenticator(model);
             }
 
+            // Assert
             var ex = Assert.ThrowsAsync<ApplicationException>(Act);
             Assert.That(ex.Message, Does.StartWith("Unable to load user with ID"));
         }
@@ -1182,16 +1344,20 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public void GetShowRecoveryCodes_ReturnsViewAndModel_WhenRecoveryCodesExists()
         {
+            // Arrange
             var userManager = CreateUserManagerStub();
-
             var signInManager = CreateSignInManagerStub(userManager);
+
+            // TODO: Refactor HttpContext stuff.
             var controller = CreateControllerInstance(signInManager);
             controller.ControllerContext.HttpContext = new DefaultHttpContext();
             controller.TempData = new TempDataDictionary(controller.HttpContext, Substitute.For<ITempDataProvider>());
             controller.TempData["RecoveryCodesKey"] = new string[] { };
 
+            // Act
             var result = controller.ShowRecoveryCodes();
 
+            // Assert
             Assert.That(result, Is.InstanceOf<ViewResult>());
             Assert.That((result as ViewResult).Model, Is.InstanceOf<ShowRecoveryCodesViewModel>());
         }
@@ -1199,16 +1365,20 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public void GetShowRecoveryCodes_RedirectsToTwoFactorAuthentication_WhenNoRecoveryCodesExist()
         {
+            // Arrange
             var userManager = CreateUserManagerStub();
-
             var signInManager = CreateSignInManagerStub(userManager);
+
+            // TODO: Refactor HttpContext stuff.
             var controller = CreateControllerInstance(signInManager);
             controller.ControllerContext.HttpContext = new DefaultHttpContext();
             controller.TempData = new TempDataDictionary(controller.HttpContext, Substitute.For<ITempDataProvider>());
             controller.TempData["RecoveryCodesKey"] = null;
 
+            // Act
             var result = controller.ShowRecoveryCodes();
 
+            // Assert
             Assert.That(result, Is.InstanceOf<RedirectToActionResult>());
             Assert.That((result as RedirectToActionResult).ActionName, Is.EqualTo(nameof(ManageController.TwoFactorAuthentication)));
         }
@@ -1218,13 +1388,16 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public void GetResetAuthenticatorWarning_ReturnsViewResetAuthenticator_WhenCalled()
         {
+            // Arrange
             var userManager = CreateUserManagerStub();
-
             var signInManager = CreateSignInManagerStub(userManager);
+
             var controller = CreateControllerInstance(signInManager);
 
+            // Act
             var result = controller.ResetAuthenticatorWarning();
 
+            // Assert
             Assert.That(result, Is.InstanceOf<ViewResult>());
             Assert.That((result as ViewResult).ViewName, Is.EqualTo(nameof(ManageController.ResetAuthenticator)));
         }
@@ -1234,6 +1407,7 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public async Task PostResetAuthenticator_RedirectsToEnableAuthenticator_WhenAuthenticationIsReset()
         {
+            // Arrange
             var userManager = CreateUserManagerStub();
             userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
                 .Returns(Task.FromResult(CreateGoodApplicationUser()));
@@ -1241,12 +1415,14 @@ namespace nikstra.CoreShopping.Web.Tests
                 .Returns(Task.FromResult(IdentityResult.Success));
             userManager.ResetAuthenticatorKeyAsync(Arg.Any<ApplicationUser>())
                 .Returns(Task.FromResult(IdentityResult.Success));
-
             var signInManager = CreateSignInManagerStub(userManager);
+
             var controller = CreateControllerInstance(signInManager);
 
+            // Act
             var result = await controller.ResetAuthenticator();
 
+            // Assert
             Assert.That(result, Is.InstanceOf<RedirectToActionResult>());
             Assert.That((result as RedirectToActionResult).ActionName, Is.EqualTo(nameof(ManageController.EnableAuthenticator)));
         }
@@ -1254,18 +1430,21 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public void PostResetAuthenticator_ThrowsAnApplicationException_WhenUserDoesNotExist()
         {
+            // Arrange
             var userManager = CreateUserManagerStub();
             userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
                 .Returns(Task.FromResult((ApplicationUser)null));
-
             var signInManager = CreateSignInManagerStub(userManager);
+
             var controller = CreateControllerInstance(signInManager);
 
+            // Act
             async Task Act()
             {
                 var result = await controller.ResetAuthenticator();
             }
 
+            // Assert
             var ex = Assert.ThrowsAsync<ApplicationException>(Act);
             Assert.That(ex.Message, Does.StartWith("Unable to load user with ID"));
         }
@@ -1275,17 +1454,20 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public async Task GetGenerateRecoveryCodesWarning_ReturnsViewGenerateRecoveryCodes_WhenUserHasTwoFactorEnabled()
         {
+            // Arrange
             var user = CreateGoodApplicationUser();
             user.TwoFactorEnabled = true;
             var userManager = CreateUserManagerStub();
             userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
                 .Returns(Task.FromResult(user));
-
             var signInManager = CreateSignInManagerStub(userManager);
+
             var controller = CreateControllerInstance(signInManager);
 
+            // Act
             var result = await controller.GenerateRecoveryCodesWarning();
 
+            // Assert
             Assert.That(result, Is.InstanceOf<ViewResult>());
             Assert.That((result as ViewResult).ViewName, Is.EqualTo(nameof(ManageController.GenerateRecoveryCodes)));
         }
@@ -1293,18 +1475,21 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public void GetGenerateRecoveryCodesWarning_ThrowsAnApplicationException_WhenUserDoesNotExist()
         {
+            // Arrange
             var userManager = CreateUserManagerStub();
             userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
                 .Returns(Task.FromResult((ApplicationUser)null));
-
             var signInManager = CreateSignInManagerStub(userManager);
+
             var controller = CreateControllerInstance(signInManager);
 
+            // Act
             async Task Act()
             {
                 var result = await controller.GenerateRecoveryCodesWarning();
             }
 
+            // Assert
             var ex = Assert.ThrowsAsync<ApplicationException>(Act);
             Assert.That(ex.Message, Does.StartWith("Unable to load user with ID"));
         }
@@ -1312,18 +1497,21 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public void GetGenerateRecoveryCodesWarning_ThrowsAnApplicationException_WhenUserDoesNotHaveTwoFactorEnabled()
         {
+            // Arrange
             var userManager = CreateUserManagerStub();
             userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
                 .Returns(Task.FromResult(CreateGoodApplicationUser()));
-
             var signInManager = CreateSignInManagerStub(userManager);
+
             var controller = CreateControllerInstance(signInManager);
 
+            // Act
             async Task Act()
             {
                 var result = await controller.GenerateRecoveryCodesWarning();
             }
 
+            // Assert
             var ex = Assert.ThrowsAsync<ApplicationException>(Act);
             Assert.That(ex.Message, Does.StartWith("Cannot generate recovery codes for user with ID"));
         }
@@ -1333,6 +1521,7 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public async Task PostGenerateRecoveryCodes_ReturnsViewShowRecoveryCodesAndModel_WhenUserHasTwoFactorEnabled()
         {
+            // Arrange
             var user = CreateGoodApplicationUser();
             user.TwoFactorEnabled = true;
             var userManager = CreateUserManagerStub();
@@ -1340,12 +1529,14 @@ namespace nikstra.CoreShopping.Web.Tests
                 .Returns(Task.FromResult(user));
             userManager.GenerateNewTwoFactorRecoveryCodesAsync(Arg.Any<ApplicationUser>(), Arg.Any<int>())
                 .Returns(Task.FromResult<IEnumerable<string>>(new List<string> { "1", "2", "3", "4", "5", "6", "7", "8", "9", "10" }));
-
             var signInManager = CreateSignInManagerStub(userManager);
+
             var controller = CreateControllerInstance(signInManager);
 
+            // Act
             var result = await controller.GenerateRecoveryCodes();
 
+            // Assert
             Assert.That(result, Is.InstanceOf<ViewResult>());
             Assert.That((result as ViewResult).ViewName, Is.EqualTo(nameof(ManageController.ShowRecoveryCodes)));
             Assert.That((result as ViewResult).Model, Is.InstanceOf<ShowRecoveryCodesViewModel>());
@@ -1354,18 +1545,21 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public void PostGenerateRecoveryCodes_ThrowsAnApplicationException_WhenUserDoesNotExist()
         {
+            // Arrange
             var userManager = CreateUserManagerStub();
             userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
                 .Returns(Task.FromResult((ApplicationUser)null));
-
             var signInManager = CreateSignInManagerStub(userManager);
+
             var controller = CreateControllerInstance(signInManager);
 
+            // Act
             async Task Act()
             {
                 var result = await controller.GenerateRecoveryCodes();
             }
 
+            // Assert
             var ex = Assert.ThrowsAsync<ApplicationException>(Act);
             Assert.That(ex.Message, Does.StartWith("Unable to load user with ID"));
         }
@@ -1373,18 +1567,21 @@ namespace nikstra.CoreShopping.Web.Tests
         [Test]
         public void PostGenerateRecoveryCodes_ThrowsAnApplicationException_WhenUserDoesNotHaveTwoFactorEnabled()
         {
+            // Arrange
             var userManager = CreateUserManagerStub();
             userManager.GetUserAsync(Arg.Any<ClaimsPrincipal>())
                 .Returns(Task.FromResult(CreateGoodApplicationUser()));
-
             var signInManager = CreateSignInManagerStub(userManager);
+
             var controller = CreateControllerInstance(signInManager);
 
+            // Act
             async Task Act()
             {
                 var result = await controller.GenerateRecoveryCodes();
             }
 
+            // Assert
             var ex = Assert.ThrowsAsync<ApplicationException>(Act);
             Assert.That(ex.Message, Does.StartWith("Cannot generate recovery codes for user with ID"));
         }
