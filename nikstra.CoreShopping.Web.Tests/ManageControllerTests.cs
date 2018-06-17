@@ -84,9 +84,14 @@ namespace nikstra.CoreShopping.Web.Tests
 
             var signInManager = CreateSignInManagerStub(userManager);
             var controller = CreateControllerInstance(signInManager);
-            var model = CreateIndexViewModel();
-            model.Email = "user@domain.new";
-            model.PhoneNumber = "999-224466";
+            var model = new IndexViewModel
+            {
+                Username = "user@domain.new",
+                Email = "user@domain.tld",
+                PhoneNumber = "999-224466",
+                IsEmailConfirmed = false,
+                StatusMessage = ""
+            };
 
             var result = await controller.Index(model);
 
@@ -111,9 +116,15 @@ namespace nikstra.CoreShopping.Web.Tests
             var signInManager = CreateSignInManagerStub(userManager);
             var controller = CreateControllerInstance(signInManager);
             controller.ModelState.AddModelError("","");
-            var model = CreateIndexViewModel();
-            model.Email = "user@domain.new";
-            model.PhoneNumber = "999-224466";
+
+            var model = new IndexViewModel
+            {
+                Username = "user@domain.tld",
+                Email = "user@domain.new",
+                PhoneNumber = "999-224466",
+                IsEmailConfirmed = false,
+                StatusMessage = ""
+            };
 
             var result = await controller.Index(model);
 
@@ -153,8 +164,14 @@ namespace nikstra.CoreShopping.Web.Tests
 
             var signInManager = CreateSignInManagerStub(userManager);
             var controller = CreateControllerInstance(signInManager);
-            var model = CreateIndexViewModel();
-            model.Email = "user@domain.new";
+            var model = new IndexViewModel
+            {
+                Username = "user@domain.tld",
+                Email = "user@domain.new",
+                PhoneNumber = "555-224466",
+                IsEmailConfirmed = false,
+                StatusMessage = ""
+            };
 
             async Task Act()
             {
@@ -180,8 +197,14 @@ namespace nikstra.CoreShopping.Web.Tests
 
             var signInManager = CreateSignInManagerStub(userManager);
             var controller = CreateControllerInstance(signInManager);
-            var model = CreateIndexViewModel();
-            model.PhoneNumber = "999-224466";
+            var model = new IndexViewModel
+            {
+                Username = "user@domain.tld",
+                Email = "user@domain.tld",
+                PhoneNumber = "999-224466",
+                IsEmailConfirmed = false,
+                StatusMessage = ""
+            };
 
             async Task Act()
             {
@@ -212,7 +235,15 @@ namespace nikstra.CoreShopping.Web.Tests
             controller.Url = Substitute.For<IUrlHelper>();
             controller.Url.EmailConfirmationLink(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
                 .Returns("dummy url");
-            var model = CreateIndexViewModel();
+            var model = new IndexViewModel
+            {
+                Username = "user@domain.tld",
+                Email = "user@domain.tld",
+                PhoneNumber = "555-224466",
+                IsEmailConfirmed = false,
+                StatusMessage = ""
+            };
+
 
             var result = await controller.SendVerificationEmail(model);
 
@@ -231,7 +262,15 @@ namespace nikstra.CoreShopping.Web.Tests
             var signInManager = CreateSignInManagerStub(userManager);
             var controller = CreateControllerInstance(signInManager);
             controller.ModelState.AddModelError("", "");
-            var model = CreateIndexViewModel();
+            var model = new IndexViewModel
+            {
+                Username = "user@domain.tld",
+                Email = "user@domain.tld",
+                PhoneNumber = "555-224466",
+                IsEmailConfirmed = false,
+                StatusMessage = ""
+            };
+
 
             var result = await controller.SendVerificationEmail(model);
 
@@ -1350,15 +1389,5 @@ namespace nikstra.CoreShopping.Web.Tests
             Assert.That(ex.Message, Does.StartWith("Cannot generate recovery codes for user with ID"));
         }
         #endregion
-
-        private IndexViewModel CreateIndexViewModel() =>
-            new IndexViewModel
-            {
-                Username = "user@domain.tld",
-                Email = "user@domain.tld",
-                PhoneNumber = "555-224466",
-                IsEmailConfirmed = false,
-                StatusMessage = ""
-            };
     }
 }
