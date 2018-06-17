@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.Extensions.Logging;
 using nikstra.CoreShopping.Web.Controllers;
 using nikstra.CoreShopping.Web.Models;
@@ -13,6 +13,7 @@ using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Security.Claims;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
@@ -30,6 +31,48 @@ namespace nikstra.CoreShopping.Web.Tests
                 Substitute.For<ILogger<ManageController>>(),
                 Substitute.For<UrlEncoder>()
                 );
+
+        #region Controller tests
+        [Test]
+        public void Controller_ShouldHaveAuthorizeAttribute()
+        {
+            // Arrange
+            var type = typeof(ManageController);
+            var attributes = type.GetCustomAttributes(false);
+            var wantedAttributeType = typeof(AuthorizeAttribute);
+
+            // Act
+            var result = attributes.FirstOrDefault(a => a.GetType() == wantedAttributeType);
+
+            // Assert
+            Assert.That(result, Is.Not.Null, $"No {wantedAttributeType.Name} found.");
+        }
+
+        [Test]
+        public void ControllerMethods_WithHttpPostAttribute_ShouldHaveValidateAntiForgeryTokenAttribute()
+        {
+            // Arrange
+            var type = typeof(ManageController);
+            var methods = type.GetMethods(BindingFlags.Instance | BindingFlags.Public)
+                .Where(m => typeof(IActionResult).IsAssignableFrom(m.ReturnType) || typeof(Task<IActionResult>).IsAssignableFrom(m.ReturnType));
+
+            // Act
+            var vulnerableMethods = new List<string>();
+            foreach (var method in methods)
+            {
+                var attributes = method.GetCustomAttributes(false);
+                if(attributes.Any(a => a.GetType() == typeof(HttpPostAttribute)) &&
+                    !attributes.Any(a => a.GetType() == typeof(ValidateAntiForgeryTokenAttribute)))
+                {
+                    vulnerableMethods.Add(method.Name);
+                }
+            }
+
+            // Assert
+            Assert.That(methods.Count, Is.GreaterThan(0), "No methods returning IActionResult found.");
+            Assert.That(vulnerableMethods.Count, Is.EqualTo(0), $"Actions missing ValidateAntiForgeryTokenAttribute: {string.Join(", ", vulnerableMethods)}.");
+        }
+        #endregion
 
         #region Index() tests
         [Test]
