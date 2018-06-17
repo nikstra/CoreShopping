@@ -32,7 +32,7 @@ namespace nikstra.CoreShopping.Web.Tests
 
         #region Index() method tests
         [Test]
-        public async Task GetIndex_SuccessfullyReturnsViewAndModel_WhenUserExists()
+        public async Task Get_Index_SuccessfullyReturnsViewAndModel_WhenUserExists()
         {
             // Arrange
             var userManager = CreateUserManagerStub();
@@ -51,7 +51,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
 
         [Test]
-        public void GetIndex_ThrowsAnApplicationException_WhenUserDoesNotExist()
+        public void Get_Index_ThrowsAnApplicationException_WhenUserDoesNotExist()
         {
             // Arrange
             var userManager = CreateUserManagerStub();
@@ -73,7 +73,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
 
         [Test]
-        public async Task PostIndex_UpdatesUserProfile_WhenModelDataDiffers()
+        public async Task Post_Index_UpdatesUserProfile_WhenModelDataDiffers()
         {
             // Arrange
             var userManager = CreateUserManagerStub();
@@ -106,7 +106,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
 
         [Test]
-        public async Task PostIndex_ReturnsViewAndModel_WhenModelStateIsNotValid()
+        public async Task Post_Index_ReturnsViewAndModel_WhenModelStateIsNotValid()
         {
             // Arrange
             var userManager = CreateUserManagerStub();
@@ -139,7 +139,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
 
         [Test]
-        public void PostIndex_ThrowsAnApplicationException_WhenUserDoesNotExist()
+        public void Post_Index_ThrowsAnApplicationException_WhenUserDoesNotExist()
         {
             // Arrange
             var userManager = CreateUserManagerStub();
@@ -163,7 +163,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
 
         [Test]
-        public void PostIndex_ThrowsAnApplicationException_WhenFailingToUpdateEmail()
+        public void Post_Index_ThrowsAnApplicationException_WhenFailingToUpdateEmail()
         {
             // Arrange
             var userManager = CreateUserManagerStub();
@@ -196,7 +196,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
 
         [Test]
-        public void PostIndex_ThrowsAnApplicationException_WhenFailingToUpdatePhoneNumber()
+        public void Post_Index_ThrowsAnApplicationException_WhenFailingToUpdatePhoneNumber()
         {
             // Arrange
             var userManager = CreateUserManagerStub();
@@ -233,7 +233,7 @@ namespace nikstra.CoreShopping.Web.Tests
 
         #region SendVerificationEmail() method tests
         [Test]
-        public async Task PostSendVerificationEmail_SuccessfullySendsEmail_WhenUserExists()
+        public async Task Post_SendVerificationEmail_SuccessfullySendsEmail_WhenUserExists()
         {
             // Arrange
             var userManager = CreateUserManagerStub();
@@ -270,7 +270,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
 
         [Test]
-        public async Task PostSendVerificationEmail_ReturnsViewAndModel_WhenModelStateIsNotValid()
+        public async Task Post_SendVerificationEmail_ReturnsViewAndModel_WhenModelStateIsNotValid()
         {
             // Arrange
             var userManager = CreateUserManagerStub();
@@ -299,7 +299,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
 
         [Test]
-        public void PostSendVerificationEmail_ThrowsAnApplicationException_WhenUserDoesNotExist()
+        public void Post_SendVerificationEmail_ThrowsAnApplicationException_WhenUserDoesNotExist()
         {
             // Arrange
             var userManager = CreateUserManagerStub();
@@ -325,7 +325,7 @@ namespace nikstra.CoreShopping.Web.Tests
 
         #region ChangePassword() metod tests
         [Test]
-        public async Task GetChangePassword_RedirectsToSetPassword_WhenUserDoesNotHaveAPassword()
+        public async Task Get_ChangePassword_RedirectsToSetPassword_WhenUserDoesNotHaveAPassword()
         {
             // Arrange
             var userManager = CreateUserManagerStub();
@@ -346,7 +346,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
 
         [Test]
-        public async Task GetChangePassword_ReturnsViewAndModel_WhenUserHasAPassword()
+        public async Task Get_ChangePassword_ReturnsViewAndModel_WhenUserHasAPassword()
         {
             // Arrange
             var userManager = CreateUserManagerStub();
@@ -369,7 +369,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
 
         [Test]
-        public void GetChangePassword_ThrowsAnApplicationException_WhenUserDoesNotExist()
+        public void Get_ChangePassword_ThrowsAnApplicationException_WhenUserDoesNotExist()
         {
             // Arrange
             var userManager = CreateUserManagerStub();
@@ -391,7 +391,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
 
         [Test]
-        public async Task PostChangePassword_RedirectsToChangePassword_WhenPasswordSuccessfullyChanged()
+        public async Task Post_ChangePassword_RedirectsToChangePassword_WhenPasswordSuccessfullyChanged()
         {
             // Arrange
             var userManager = CreateUserManagerStub();
@@ -420,7 +420,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
 
         [Test]
-        public async Task PostChangePassword_ReturnsViewAndModel_WhenFailingToChangePassword()
+        public async Task Post_ChangePassword_ReturnsViewAndModel_WhenFailingToChangePassword()
         {
             // Arrange
             var userManager = CreateUserManagerStub();
@@ -446,7 +446,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
 
         [Test]
-        public async Task PostChangePassword_ReturnsViewAndModel_WhenModelStateIsNotValid()
+        public async Task Post_ChangePassword_ReturnsViewAndModel_WhenModelStateIsNotValid()
         {
             // Arrange
             var userManager = CreateUserManagerStub();
@@ -471,7 +471,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
 
         [Test]
-        public void PostChangePassword_ThrowsAnApplicationException_WhenUserDoesNotExist()
+        public void Post_ChangePassword_ThrowsAnApplicationException_WhenUserDoesNotExist()
         {
             // Arrange
             var userManager = CreateUserManagerStub();
@@ -497,7 +497,7 @@ namespace nikstra.CoreShopping.Web.Tests
 
         #region SetPassword() method tests
         [Test]
-        public async Task GetSetPassword_SuccessfullyReturnsViewAndModel_WhenUserDoesNotHaveAPassword()
+        public async Task Get_SetPassword_SuccessfullyReturnsViewAndModel_WhenUserDoesNotHaveAPassword()
         {
             // Arrange
             var userManager = CreateUserManagerStub();
@@ -519,7 +519,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
 
         [Test]
-        public async Task GetSetPassword_RedirectsToChangePassword_WhenUserHasAPassword()
+        public async Task Get_SetPassword_RedirectsToChangePassword_WhenUserHasAPassword()
         {
             // Arrange
             var userManager = CreateUserManagerStub();
@@ -540,7 +540,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
 
         [Test]
-        public void GetSetPassword_ThrowsAnApplicationException_WhenUserDoesNotExist()
+        public void Get_SetPassword_ThrowsAnApplicationException_WhenUserDoesNotExist()
         {
             // Arrange
             var userManager = CreateUserManagerStub();
@@ -562,7 +562,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
 
         [Test]
-        public async Task PostSetPassword_RedirectsToSetPassword_WhenPasswordIsSuccessfullySet()
+        public async Task Post_SetPassword_RedirectsToSetPassword_WhenPasswordIsSuccessfullySet()
         {
             // Arrange
             var userManager = CreateUserManagerStub();
@@ -587,7 +587,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
 
         [Test]
-        public async Task PostSetPassword_ReturnsViewAndModel_WhenModelStateIsNotValid()
+        public async Task Post_SetPassword_ReturnsViewAndModel_WhenModelStateIsNotValid()
         {
             // Arrange
             var userManager = CreateUserManagerStub();
@@ -609,7 +609,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
 
         [Test]
-        public async Task PostSetPassword_ReturnsViewAndModel_WhenPasswordCouldNotBeSet()
+        public async Task Post_SetPassword_ReturnsViewAndModel_WhenPasswordCouldNotBeSet()
         {
             // Arrange
             var userManager = CreateUserManagerStub();
@@ -633,7 +633,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
 
         [Test]
-        public void PostSetPassword_ThrowsAnApplicationException_WhenUserDoesNotExist()
+        public void Post_SetPassword_ThrowsAnApplicationException_WhenUserDoesNotExist()
         {
             // Arrange
             var userManager = CreateUserManagerStub();
@@ -659,7 +659,7 @@ namespace nikstra.CoreShopping.Web.Tests
 
         #region ExternalLogins() method tests
         [Test]
-        public async Task GetExternalLogins_ReturnsViewAndModel_WhenUserHasNoExternalLogins()
+        public async Task Get_ExternalLogins_ReturnsViewAndModel_WhenUserHasNoExternalLogins()
         {
             // Arrange
             var userManager = CreateUserManagerStub();
@@ -689,7 +689,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
 
         [Test]
-        public async Task GetExternalLogins_ReturnsViewAndModel_WhenUserHasExternalLogins()
+        public async Task Get_ExternalLogins_ReturnsViewAndModel_WhenUserHasExternalLogins()
         {
             // Arrange
             var userManager = CreateUserManagerStub();
@@ -723,7 +723,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
 
         [Test]
-        public async Task GetExternalLogins_SetsModelShowRemoveButtonToFalse_WhenUserHasOnlyOneLogin()
+        public async Task Get_ExternalLogins_SetsModelShowRemoveButtonToFalse_WhenUserHasOnlyOneLogin()
         {
             // Arrange
             var userManager = CreateUserManagerStub();
@@ -754,7 +754,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
 
         [Test]
-        public void GetExternalLogins_ThrowsAnApplicationException_WhenUserDoesNotExist()
+        public void Get_ExternalLogins_ThrowsAnApplicationException_WhenUserDoesNotExist()
         {
             // Arrange
             var userManager = CreateUserManagerStub();
@@ -778,7 +778,7 @@ namespace nikstra.CoreShopping.Web.Tests
 
         #region LinkLogin() method tests
         [Test]
-        public async Task PostLinkLogin_ReturnsChallengeResult_WhenSuccessful()
+        public async Task Post_LinkLogin_ReturnsChallengeResult_WhenSuccessful()
         {
             // Arrange
             var userManager = CreateUserManagerStub();
@@ -801,7 +801,7 @@ namespace nikstra.CoreShopping.Web.Tests
 
         #region LinkLoginCallback() method tests
         [Test]
-        public async Task GetLinkLoginCallback_RedirectsToExternalLogins_WhenLoginIsSuccessfullyAdded()
+        public async Task Get_LinkLoginCallback_RedirectsToExternalLogins_WhenLoginIsSuccessfullyAdded()
         {
             // Arrange
             var userManager = CreateUserManagerStub();
@@ -827,7 +827,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
 
         [Test]
-        public void GetLinkLoginCallback_ThrowsAnApplicationException_WhenUserDoesNotExist()
+        public void Get_LinkLoginCallback_ThrowsAnApplicationException_WhenUserDoesNotExist()
         {
             // Arrange
             var userManager = CreateUserManagerStub();
@@ -849,7 +849,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
 
         [Test]
-        public void GetLinkLoginCallback_ThrowsAnApplicationException_WhenFailingToGetExternalLoginInfo()
+        public void Get_LinkLoginCallback_ThrowsAnApplicationException_WhenFailingToGetExternalLoginInfo()
         {
             // Arrange
             var userManager = CreateUserManagerStub();
@@ -873,7 +873,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
 
         [Test]
-        public void GetLinkLoginCallback_ThrowsAnApplicationException_WhenFailingToAddLogin()
+        public void Get_LinkLoginCallback_ThrowsAnApplicationException_WhenFailingToAddLogin()
         {
             // Arrange
             var userManager = CreateUserManagerStub();
@@ -902,7 +902,7 @@ namespace nikstra.CoreShopping.Web.Tests
 
         #region RemoveLogin() method tests
         [Test]
-        public async Task PostRemoveLogin_RedirectsToExternalLogins_WhenLoginIsRemoved()
+        public async Task Post_RemoveLogin_RedirectsToExternalLogins_WhenLoginIsRemoved()
         {
             // Arrange
             var userManager = CreateUserManagerStub();
@@ -928,7 +928,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
 
         [Test]
-        public void PostRemoveLogin_ThrowsAnApplicationException_WhenUserDoesNotExist()
+        public void Post_RemoveLogin_ThrowsAnApplicationException_WhenUserDoesNotExist()
         {
             // Arrange
             var userManager = CreateUserManagerStub();
@@ -952,7 +952,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
 
         [Test]
-        public void PostRemoveLogin_ThrowsAnApplicationException_WhenFailingToRemoveLogin()
+        public void Post_RemoveLogin_ThrowsAnApplicationException_WhenFailingToRemoveLogin()
         {
             // Arrange
             var userManager = CreateUserManagerStub();
@@ -980,7 +980,7 @@ namespace nikstra.CoreShopping.Web.Tests
 
         #region TwoFactorAuthentication() method tests
         [Test]
-        public async Task GetTwoFactorAuthentication_ReturnsViewAndModel_WhenUserExists()
+        public async Task Get_TwoFactorAuthentication_ReturnsViewAndModel_WhenUserExists()
         {
             // Arrange
             var userManager = CreateUserManagerStub();
@@ -1005,7 +1005,7 @@ namespace nikstra.CoreShopping.Web.Tests
             Assert.That(((result as ViewResult).Model as TwoFactorAuthenticationViewModel).RecoveryCodesLeft, Is.EqualTo(1));
         }
 
-        public void GetTwoFactorAuthentication_ThrowsAnApplicationException_WhenUserDoesNotExist()
+        public void Get_TwoFactorAuthentication_ThrowsAnApplicationException_WhenUserDoesNotExist()
         {
             // Arrange
             var userManager = CreateUserManagerStub();
@@ -1029,7 +1029,7 @@ namespace nikstra.CoreShopping.Web.Tests
 
         #region Disable2faWarning() method tests
         [Test]
-        public async Task GetDisable2faWarning_ReturnsView_WhenUserExists()
+        public async Task Get_Disable2faWarning_ReturnsView_WhenUserExists()
         {
             // Arrange
             var user = CreateGoodApplicationUser();
@@ -1050,7 +1050,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
 
         [Test]
-        public void GetDisable2faWarning_ThrowsAnApplicationException_WhenUserDoesNotExist()
+        public void Get_Disable2faWarning_ThrowsAnApplicationException_WhenUserDoesNotExist()
         {
             // Arrange
             var userManager = CreateUserManagerStub();
@@ -1072,7 +1072,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
 
         [Test]
-        public void GetDisable2faWarning_ThrowsAnApplicationException_WhenUserDoesNotHave2FactorAuthEnabled()
+        public void Get_Disable2faWarning_ThrowsAnApplicationException_WhenUserDoesNotHave2FactorAuthEnabled()
         {
             // Arrange
             var userManager = CreateUserManagerStub();
@@ -1096,7 +1096,7 @@ namespace nikstra.CoreShopping.Web.Tests
 
         #region Disable2fa() method tests
         [Test]
-        public async Task PostDisable2fa_RedirectsToTwoFactorAuthentication_WhenUseExists()
+        public async Task Post_Disable2fa_RedirectsToTwoFactorAuthentication_WhenUseExists()
         {
             // Arrange
             var userManager = CreateUserManagerStub();
@@ -1117,7 +1117,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
 
         [Test]
-        public void PostDisable2fa_ThrowsAnApplicationException_WhenUserDoesNotExist()
+        public void Post_Disable2fa_ThrowsAnApplicationException_WhenUserDoesNotExist()
         {
             // Arrange
             var userManager = CreateUserManagerStub();
@@ -1139,7 +1139,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
 
         [Test]
-        public void PostDisable2fa_ThrowsAnApplicationException_WhenFailingToDisable2FactorAuth()
+        public void Post_Disable2fa_ThrowsAnApplicationException_WhenFailingToDisable2FactorAuth()
         {
             // Arrange
             var userManager = CreateUserManagerStub();
@@ -1165,7 +1165,7 @@ namespace nikstra.CoreShopping.Web.Tests
 
         #region EnableAuthenticator() method tests
         [Test]
-        public async Task GetEnableAuthenticator_ReturnsViewAndModel_WhenUserExists()
+        public async Task Get_EnableAuthenticator_ReturnsViewAndModel_WhenUserExists()
         {
             // Arrange
             var userManager = CreateUserManagerStub();
@@ -1188,7 +1188,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
 
         [Test]
-        public void GetEnableAuthenticator_ThrowsAnApplicationException_WhenUserDoesNotExist()
+        public void Get_EnableAuthenticator_ThrowsAnApplicationException_WhenUserDoesNotExist()
         {
             // Arrange
             var userManager = CreateUserManagerStub();
@@ -1210,7 +1210,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
 
         [Test]
-        public async Task PostEnableAuthenticator_RedirectsToShowRecoveryCodes_WhenUserExistsAndTwoFactorTokenIsValid()
+        public async Task Post_EnableAuthenticator_RedirectsToShowRecoveryCodes_WhenUserExistsAndTwoFactorTokenIsValid()
         {
             // Arrange
             var userManager = CreateUserManagerStub();
@@ -1243,7 +1243,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
 
         [Test]
-        public async Task PostEnableAuthenticator_ReturnsViewAndModel_WhenModelStateIsNotValid()
+        public async Task Post_EnableAuthenticator_ReturnsViewAndModel_WhenModelStateIsNotValid()
         {
             // Arrange
             var userManager = CreateUserManagerStub();
@@ -1269,7 +1269,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
 
         [Test]
-        public async Task PostEnableAuthenticator_ReturnsViewAndModel_WhenTwoFactorTokenIsNotValid()
+        public async Task Post_EnableAuthenticator_ReturnsViewAndModel_WhenTwoFactorTokenIsNotValid()
         {
             // Arrange
             var userManager = CreateUserManagerStub();
@@ -1302,7 +1302,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
 
         [Test]
-        public void PostEnableAuthenticator_ThrowsAnApplicationException_WhenUserDoesNotExist()
+        public void Post_EnableAuthenticator_ThrowsAnApplicationException_WhenUserDoesNotExist()
         {
             // Arrange
             var userManager = CreateUserManagerStub();
@@ -1328,7 +1328,7 @@ namespace nikstra.CoreShopping.Web.Tests
 
         #region ShowRecoveryCodes() method tests
         [Test]
-        public void GetShowRecoveryCodes_ReturnsViewAndModel_WhenRecoveryCodesExists()
+        public void Get_ShowRecoveryCodes_ReturnsViewAndModel_WhenRecoveryCodesExists()
         {
             // Arrange
             var userManager = CreateUserManagerStub();
@@ -1347,7 +1347,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
 
         [Test]
-        public void GetShowRecoveryCodes_RedirectsToTwoFactorAuthentication_WhenNoRecoveryCodesExist()
+        public void Get_ShowRecoveryCodes_RedirectsToTwoFactorAuthentication_WhenNoRecoveryCodesExist()
         {
             // Arrange
             var userManager = CreateUserManagerStub();
@@ -1368,7 +1368,7 @@ namespace nikstra.CoreShopping.Web.Tests
 
         #region ResetAuthenticatorWarning() method tests
         [Test]
-        public void GetResetAuthenticatorWarning_ReturnsViewResetAuthenticator_WhenCalled()
+        public void Get_ResetAuthenticatorWarning_ReturnsViewResetAuthenticator_WhenCalled()
         {
             // Arrange
             var userManager = CreateUserManagerStub();
@@ -1387,7 +1387,7 @@ namespace nikstra.CoreShopping.Web.Tests
 
         #region ResetAuthenticator() method tests
         [Test]
-        public async Task PostResetAuthenticator_RedirectsToEnableAuthenticator_WhenAuthenticationIsReset()
+        public async Task Post_ResetAuthenticator_RedirectsToEnableAuthenticator_WhenAuthenticationIsReset()
         {
             // Arrange
             var userManager = CreateUserManagerStub();
@@ -1410,7 +1410,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
 
         [Test]
-        public void PostResetAuthenticator_ThrowsAnApplicationException_WhenUserDoesNotExist()
+        public void Post_ResetAuthenticator_ThrowsAnApplicationException_WhenUserDoesNotExist()
         {
             // Arrange
             var userManager = CreateUserManagerStub();
@@ -1434,7 +1434,7 @@ namespace nikstra.CoreShopping.Web.Tests
 
         #region GenerateRecoveryCodesWarning() method tests
         [Test]
-        public async Task GetGenerateRecoveryCodesWarning_ReturnsViewGenerateRecoveryCodes_WhenUserHasTwoFactorEnabled()
+        public async Task Get_GenerateRecoveryCodesWarning_ReturnsViewGenerateRecoveryCodes_WhenUserHasTwoFactorEnabled()
         {
             // Arrange
             var user = CreateGoodApplicationUser();
@@ -1455,7 +1455,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
 
         [Test]
-        public void GetGenerateRecoveryCodesWarning_ThrowsAnApplicationException_WhenUserDoesNotExist()
+        public void Get_GenerateRecoveryCodesWarning_ThrowsAnApplicationException_WhenUserDoesNotExist()
         {
             // Arrange
             var userManager = CreateUserManagerStub();
@@ -1477,7 +1477,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
 
         [Test]
-        public void GetGenerateRecoveryCodesWarning_ThrowsAnApplicationException_WhenUserDoesNotHaveTwoFactorEnabled()
+        public void Get_GenerateRecoveryCodesWarning_ThrowsAnApplicationException_WhenUserDoesNotHaveTwoFactorEnabled()
         {
             // Arrange
             var userManager = CreateUserManagerStub();
@@ -1501,7 +1501,7 @@ namespace nikstra.CoreShopping.Web.Tests
 
         #region GenerateRecoveryCodes() method tests
         [Test]
-        public async Task PostGenerateRecoveryCodes_ReturnsViewShowRecoveryCodesAndModel_WhenUserHasTwoFactorEnabled()
+        public async Task Post_GenerateRecoveryCodes_ReturnsViewShowRecoveryCodesAndModel_WhenUserHasTwoFactorEnabled()
         {
             // Arrange
             var user = CreateGoodApplicationUser();
@@ -1525,7 +1525,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
 
         [Test]
-        public void PostGenerateRecoveryCodes_ThrowsAnApplicationException_WhenUserDoesNotExist()
+        public void Post_GenerateRecoveryCodes_ThrowsAnApplicationException_WhenUserDoesNotExist()
         {
             // Arrange
             var userManager = CreateUserManagerStub();
@@ -1547,7 +1547,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
 
         [Test]
-        public void PostGenerateRecoveryCodes_ThrowsAnApplicationException_WhenUserDoesNotHaveTwoFactorEnabled()
+        public void Post_GenerateRecoveryCodes_ThrowsAnApplicationException_WhenUserDoesNotHaveTwoFactorEnabled()
         {
             // Arrange
             var userManager = CreateUserManagerStub();
