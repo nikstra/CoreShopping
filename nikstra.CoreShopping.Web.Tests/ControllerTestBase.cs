@@ -31,8 +31,6 @@ namespace nikstra.CoreShopping.Web.Tests
         protected string _action;
         protected string _scheme;
 
-        protected virtual ApplicationUser CreateNullApplicationUser() => null;
-
         protected virtual ApplicationUser CreateGoodApplicationUser() =>
             new ApplicationUser
             {

@@ -1870,7 +1870,7 @@ namespace nikstra.CoreShopping.Web.Tests
             // Arrange
             var userManager = CreateUserManagerStub();
             userManager.FindByEmailAsync(Arg.Any<string>())
-                .Returns(Task.FromResult(CreateNullApplicationUser()));
+                .Returns(Task.FromResult((ApplicationUser)null));
             var signInManager = CreateSignInManagerStub(userManager);
 
             var model = new ResetPasswordViewModel
