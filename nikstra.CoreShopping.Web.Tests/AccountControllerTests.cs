@@ -1969,5 +1969,39 @@ namespace nikstra.CoreShopping.Web.Tests
             Assert.That(result, Is.InstanceOf<ViewResult>());
         }
         #endregion
+
+        #region AccessDenied tests
+        [Test]
+        public void Get_AccessDenied_ShouldHaveHttpGetAttribute()
+        {
+            // Arrange
+            var type = typeof(AccountController);
+            var method = type.GetMethod(nameof(AccountController.AccessDenied), Type.EmptyTypes);
+            var attributes = method.GetCustomAttributes(false);
+            var wantedAttributeType = typeof(HttpGetAttribute);
+
+            // Act
+            var result = attributes.FirstOrDefault(a => a.GetType() == wantedAttributeType);
+
+            // Assert
+            Assert.That(result, Is.Not.Null, $"No {wantedAttributeType.Name} found.");
+        }
+
+        [Test]
+        public void Get_AccessDenied_ReturnsView_WhenCalled()
+        {
+            // Arrange
+            var userManager = CreateUserManagerStub();
+            var signInManager = CreateSignInManagerStub(userManager);
+
+            var controller = CreateControllerInstance(signInManager);
+
+            // Act
+            var result = controller.AccessDenied();
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<ViewResult>());
+        }
+        #endregion
     }
 }
