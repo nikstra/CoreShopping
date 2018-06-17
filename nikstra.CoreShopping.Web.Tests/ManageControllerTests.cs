@@ -12,6 +12,7 @@ using NSubstitute;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Security.Claims;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
@@ -31,6 +32,22 @@ namespace nikstra.CoreShopping.Web.Tests
                 );
 
         #region Index() tests
+        [Test]
+        public void Get_Index_ShouldHaveHttpGetAttribute()
+        {
+            // Arrange
+            var type = typeof(ManageController);
+            var method = type.GetMethod(nameof(ManageController.Index), Type.EmptyTypes);
+            var attributes = method.GetCustomAttributes(false);
+            var wantedAttributeType = typeof(HttpGetAttribute);
+
+            // Act
+            var result = attributes.FirstOrDefault(a => a.GetType() == wantedAttributeType);
+
+            // Assert
+            Assert.That(result, Is.Not.Null, $"No {wantedAttributeType.Name} found.");
+        }
+
         [Test]
         public async Task Get_Index_SuccessfullyReturnsViewAndModel_WhenUserExists()
         {
@@ -70,6 +87,22 @@ namespace nikstra.CoreShopping.Web.Tests
             // Assert
             var ex = Assert.ThrowsAsync<ApplicationException>(Act);
             Assert.That(ex.Message, Does.StartWith("Unable to load user with ID"));
+        }
+
+        [Test]
+        public void Post_Index_ShouldHaveHttpPostAttribute()
+        {
+            // Arrange
+            var type = typeof(ManageController);
+            var method = type.GetMethod(nameof(ManageController.Index), new[] { typeof(IndexViewModel) });
+            var attributes = method.GetCustomAttributes(false);
+            var wantedAttributeType = typeof(HttpPostAttribute);
+
+            // Act
+            var result = attributes.FirstOrDefault(a => a.GetType() == wantedAttributeType);
+
+            // Assert
+            Assert.That(result, Is.Not.Null, $"No {wantedAttributeType.Name} found.");
         }
 
         [Test]
@@ -233,6 +266,22 @@ namespace nikstra.CoreShopping.Web.Tests
 
         #region SendVerificationEmail() tests
         [Test]
+        public void Post_SendVerificationEmail_ShouldHaveHttpPostAttribute()
+        {
+            // Arrange
+            var type = typeof(ManageController);
+            var method = type.GetMethod(nameof(ManageController.SendVerificationEmail), new[] { typeof(IndexViewModel) });
+            var attributes = method.GetCustomAttributes(false);
+            var wantedAttributeType = typeof(HttpPostAttribute);
+
+            // Act
+            var result = attributes.FirstOrDefault(a => a.GetType() == wantedAttributeType);
+
+            // Assert
+            Assert.That(result, Is.Not.Null, $"No {wantedAttributeType.Name} found.");
+        }
+
+        [Test]
         public async Task Post_SendVerificationEmail_SuccessfullySendsEmail_WhenUserExists()
         {
             // Arrange
@@ -325,6 +374,22 @@ namespace nikstra.CoreShopping.Web.Tests
 
         #region ChangePassword() metod tests
         [Test]
+        public void Get_ChangePassword_ShouldHaveHttpGetAttribute()
+        {
+            // Arrange
+            var type = typeof(ManageController);
+            var method = type.GetMethod(nameof(ManageController.ChangePassword), Type.EmptyTypes);
+            var attributes = method.GetCustomAttributes(false);
+            var wantedAttributeType = typeof(HttpGetAttribute);
+
+            // Act
+            var result = attributes.FirstOrDefault(a => a.GetType() == wantedAttributeType);
+
+            // Assert
+            Assert.That(result, Is.Not.Null, $"No {wantedAttributeType.Name} found.");
+        }
+
+        [Test]
         public async Task Get_ChangePassword_RedirectsToSetPassword_WhenUserDoesNotHaveAPassword()
         {
             // Arrange
@@ -388,6 +453,22 @@ namespace nikstra.CoreShopping.Web.Tests
             // Assert
             var ex = Assert.ThrowsAsync<ApplicationException>(Act);
             Assert.That(ex.Message, Does.StartWith("Unable to load user with ID"));
+        }
+
+        [Test]
+        public void Post_ChangePassword_ShouldHaveHttpPostAttribute()
+        {
+            // Arrange
+            var type = typeof(ManageController);
+            var method = type.GetMethod(nameof(ManageController.ChangePassword), new[] { typeof(ChangePasswordViewModel) });
+            var attributes = method.GetCustomAttributes(false);
+            var wantedAttributeType = typeof(HttpPostAttribute);
+
+            // Act
+            var result = attributes.FirstOrDefault(a => a.GetType() == wantedAttributeType);
+
+            // Assert
+            Assert.That(result, Is.Not.Null, $"No {wantedAttributeType.Name} found.");
         }
 
         [Test]
@@ -497,6 +578,22 @@ namespace nikstra.CoreShopping.Web.Tests
 
         #region SetPassword() tests
         [Test]
+        public void Get_SetPassword_ShouldHaveHttpGetAttribute()
+        {
+            // Arrange
+            var type = typeof(ManageController);
+            var method = type.GetMethod(nameof(ManageController.SetPassword), Type.EmptyTypes);
+            var attributes = method.GetCustomAttributes(false);
+            var wantedAttributeType = typeof(HttpGetAttribute);
+
+            // Act
+            var result = attributes.FirstOrDefault(a => a.GetType() == wantedAttributeType);
+
+            // Assert
+            Assert.That(result, Is.Not.Null, $"No {wantedAttributeType.Name} found.");
+        }
+
+        [Test]
         public async Task Get_SetPassword_SuccessfullyReturnsViewAndModel_WhenUserDoesNotHaveAPassword()
         {
             // Arrange
@@ -559,6 +656,22 @@ namespace nikstra.CoreShopping.Web.Tests
             // Assert
             var ex = Assert.ThrowsAsync<ApplicationException>(Act);
             Assert.That(ex.Message, Does.StartWith("Unable to load user with ID"));
+        }
+
+        [Test]
+        public void Post_SetPassword_ShouldHaveHttpPostAttribute()
+        {
+            // Arrange
+            var type = typeof(ManageController);
+            var method = type.GetMethod(nameof(ManageController.SetPassword), new[] { typeof(SetPasswordViewModel) });
+            var attributes = method.GetCustomAttributes(false);
+            var wantedAttributeType = typeof(HttpPostAttribute);
+
+            // Act
+            var result = attributes.FirstOrDefault(a => a.GetType() == wantedAttributeType);
+
+            // Assert
+            Assert.That(result, Is.Not.Null, $"No {wantedAttributeType.Name} found.");
         }
 
         [Test]
@@ -658,6 +771,22 @@ namespace nikstra.CoreShopping.Web.Tests
         #endregion
 
         #region ExternalLogins() tests
+        [Test]
+        public void Get_ExternalLogins_ShouldHaveHttpGetAttribute()
+        {
+            // Arrange
+            var type = typeof(ManageController);
+            var method = type.GetMethod(nameof(ManageController.ExternalLogins), Type.EmptyTypes);
+            var attributes = method.GetCustomAttributes(false);
+            var wantedAttributeType = typeof(HttpGetAttribute);
+
+            // Act
+            var result = attributes.FirstOrDefault(a => a.GetType() == wantedAttributeType);
+
+            // Assert
+            Assert.That(result, Is.Not.Null, $"No {wantedAttributeType.Name} found.");
+        }
+
         [Test]
         public async Task Get_ExternalLogins_ReturnsViewAndModel_WhenUserHasNoExternalLogins()
         {
@@ -778,6 +907,22 @@ namespace nikstra.CoreShopping.Web.Tests
 
         #region LinkLogin() tests
         [Test]
+        public void Post_LinkLogin_ShouldHaveHttpPostAttribute()
+        {
+            // Arrange
+            var type = typeof(ManageController);
+            var method = type.GetMethod(nameof(ManageController.LinkLogin), new[] { typeof(string) });
+            var attributes = method.GetCustomAttributes(false);
+            var wantedAttributeType = typeof(HttpPostAttribute);
+
+            // Act
+            var result = attributes.FirstOrDefault(a => a.GetType() == wantedAttributeType);
+
+            // Assert
+            Assert.That(result, Is.Not.Null, $"No {wantedAttributeType.Name} found.");
+        }
+
+        [Test]
         public async Task Post_LinkLogin_ReturnsChallengeResult_WhenSuccessful()
         {
             // Arrange
@@ -800,6 +945,22 @@ namespace nikstra.CoreShopping.Web.Tests
         #endregion
 
         #region LinkLoginCallback() tests
+        [Test]
+        public void Get_LinkLoginCallback_ShouldHaveHttpGetAttribute()
+        {
+            // Arrange
+            var type = typeof(ManageController);
+            var method = type.GetMethod(nameof(ManageController.LinkLoginCallback), Type.EmptyTypes);
+            var attributes = method.GetCustomAttributes(false);
+            var wantedAttributeType = typeof(HttpGetAttribute);
+
+            // Act
+            var result = attributes.FirstOrDefault(a => a.GetType() == wantedAttributeType);
+
+            // Assert
+            Assert.That(result, Is.Not.Null, $"No {wantedAttributeType.Name} found.");
+        }
+
         [Test]
         public async Task Get_LinkLoginCallback_RedirectsToExternalLogins_WhenLoginIsSuccessfullyAdded()
         {
@@ -902,6 +1063,22 @@ namespace nikstra.CoreShopping.Web.Tests
 
         #region RemoveLogin() tests
         [Test]
+        public void Post_RemoveLogin_ShouldHaveHttpPostAttribute()
+        {
+            // Arrange
+            var type = typeof(ManageController);
+            var method = type.GetMethod(nameof(ManageController.RemoveLogin), new[] { typeof(RemoveLoginViewModel) });
+            var attributes = method.GetCustomAttributes(false);
+            var wantedAttributeType = typeof(HttpPostAttribute);
+
+            // Act
+            var result = attributes.FirstOrDefault(a => a.GetType() == wantedAttributeType);
+
+            // Assert
+            Assert.That(result, Is.Not.Null, $"No {wantedAttributeType.Name} found.");
+        }
+
+        [Test]
         public async Task Post_RemoveLogin_RedirectsToExternalLogins_WhenLoginIsRemoved()
         {
             // Arrange
@@ -980,6 +1157,22 @@ namespace nikstra.CoreShopping.Web.Tests
 
         #region TwoFactorAuthentication() tests
         [Test]
+        public void Get_TwoFactorAuthentication_ShouldHaveHttpGetAttribute()
+        {
+            // Arrange
+            var type = typeof(ManageController);
+            var method = type.GetMethod(nameof(ManageController.TwoFactorAuthentication), Type.EmptyTypes);
+            var attributes = method.GetCustomAttributes(false);
+            var wantedAttributeType = typeof(HttpGetAttribute);
+
+            // Act
+            var result = attributes.FirstOrDefault(a => a.GetType() == wantedAttributeType);
+
+            // Assert
+            Assert.That(result, Is.Not.Null, $"No {wantedAttributeType.Name} found.");
+        }
+
+        [Test]
         public async Task Get_TwoFactorAuthentication_ReturnsViewAndModel_WhenUserExists()
         {
             // Arrange
@@ -1028,6 +1221,22 @@ namespace nikstra.CoreShopping.Web.Tests
         #endregion
 
         #region Disable2faWarning() tests
+        [Test]
+        public void Get_Disable2faWarning_ShouldHaveHttpGetAttribute()
+        {
+            // Arrange
+            var type = typeof(ManageController);
+            var method = type.GetMethod(nameof(ManageController.Disable2faWarning), Type.EmptyTypes);
+            var attributes = method.GetCustomAttributes(false);
+            var wantedAttributeType = typeof(HttpGetAttribute);
+
+            // Act
+            var result = attributes.FirstOrDefault(a => a.GetType() == wantedAttributeType);
+
+            // Assert
+            Assert.That(result, Is.Not.Null, $"No {wantedAttributeType.Name} found.");
+        }
+
         [Test]
         public async Task Get_Disable2faWarning_ReturnsView_WhenUserExists()
         {
@@ -1095,6 +1304,22 @@ namespace nikstra.CoreShopping.Web.Tests
         #endregion
 
         #region Disable2fa() tests
+        [Test]
+        public void Post_Disable2fa_ShouldHaveHttpPostAttribute()
+        {
+            // Arrange
+            var type = typeof(ManageController);
+            var method = type.GetMethod(nameof(ManageController.Disable2fa), Type.EmptyTypes);
+            var attributes = method.GetCustomAttributes(false);
+            var wantedAttributeType = typeof(HttpPostAttribute);
+
+            // Act
+            var result = attributes.FirstOrDefault(a => a.GetType() == wantedAttributeType);
+
+            // Assert
+            Assert.That(result, Is.Not.Null, $"No {wantedAttributeType.Name} found.");
+        }
+
         [Test]
         public async Task Post_Disable2fa_RedirectsToTwoFactorAuthentication_WhenUseExists()
         {
@@ -1165,6 +1390,22 @@ namespace nikstra.CoreShopping.Web.Tests
 
         #region EnableAuthenticator() tests
         [Test]
+        public void Get_EnableAuthenticator_ShouldHaveHttpGetAttribute()
+        {
+            // Arrange
+            var type = typeof(ManageController);
+            var method = type.GetMethod(nameof(ManageController.EnableAuthenticator), Type.EmptyTypes);
+            var attributes = method.GetCustomAttributes(false);
+            var wantedAttributeType = typeof(HttpGetAttribute);
+
+            // Act
+            var result = attributes.FirstOrDefault(a => a.GetType() == wantedAttributeType);
+
+            // Assert
+            Assert.That(result, Is.Not.Null, $"No {wantedAttributeType.Name} found.");
+        }
+
+        [Test]
         public async Task Get_EnableAuthenticator_ReturnsViewAndModel_WhenUserExists()
         {
             // Arrange
@@ -1207,6 +1448,22 @@ namespace nikstra.CoreShopping.Web.Tests
             // Assert
             var ex = Assert.ThrowsAsync<ApplicationException>(Act);
             Assert.That(ex.Message, Does.StartWith("Unable to load user with ID"));
+        }
+
+        [Test]
+        public void Post_EnableAuthenticator_ShouldHaveHttpPostAttribute()
+        {
+            // Arrange
+            var type = typeof(ManageController);
+            var method = type.GetMethod(nameof(ManageController.EnableAuthenticator), new[] { typeof(EnableAuthenticatorViewModel) });
+            var attributes = method.GetCustomAttributes(false);
+            var wantedAttributeType = typeof(HttpPostAttribute);
+
+            // Act
+            var result = attributes.FirstOrDefault(a => a.GetType() == wantedAttributeType);
+
+            // Assert
+            Assert.That(result, Is.Not.Null, $"No {wantedAttributeType.Name} found.");
         }
 
         [Test]
@@ -1328,6 +1585,22 @@ namespace nikstra.CoreShopping.Web.Tests
 
         #region ShowRecoveryCodes() tests
         [Test]
+        public void Get_ShowRecoveryCodes_ShouldHaveHttpGetAttribute()
+        {
+            // Arrange
+            var type = typeof(ManageController);
+            var method = type.GetMethod(nameof(ManageController.ShowRecoveryCodes), Type.EmptyTypes);
+            var attributes = method.GetCustomAttributes(false);
+            var wantedAttributeType = typeof(HttpGetAttribute);
+
+            // Act
+            var result = attributes.FirstOrDefault(a => a.GetType() == wantedAttributeType);
+
+            // Assert
+            Assert.That(result, Is.Not.Null, $"No {wantedAttributeType.Name} found.");
+        }
+
+        [Test]
         public void Get_ShowRecoveryCodes_ReturnsViewAndModel_WhenRecoveryCodesExists()
         {
             // Arrange
@@ -1368,6 +1641,22 @@ namespace nikstra.CoreShopping.Web.Tests
 
         #region ResetAuthenticatorWarning() tests
         [Test]
+        public void Get_ResetAuthenticatorWarning_ShouldHaveHttpGetAttribute()
+        {
+            // Arrange
+            var type = typeof(ManageController);
+            var method = type.GetMethod(nameof(ManageController.ResetAuthenticatorWarning), Type.EmptyTypes);
+            var attributes = method.GetCustomAttributes(false);
+            var wantedAttributeType = typeof(HttpGetAttribute);
+
+            // Act
+            var result = attributes.FirstOrDefault(a => a.GetType() == wantedAttributeType);
+
+            // Assert
+            Assert.That(result, Is.Not.Null, $"No {wantedAttributeType.Name} found.");
+        }
+
+        [Test]
         public void Get_ResetAuthenticatorWarning_ReturnsViewResetAuthenticator_WhenCalled()
         {
             // Arrange
@@ -1386,6 +1675,22 @@ namespace nikstra.CoreShopping.Web.Tests
         #endregion
 
         #region ResetAuthenticator() tests
+        [Test]
+        public void Post_ResetAuthenticator_ShouldHaveHttpPostAttribute()
+        {
+            // Arrange
+            var type = typeof(ManageController);
+            var method = type.GetMethod(nameof(ManageController.ResetAuthenticator), Type.EmptyTypes);
+            var attributes = method.GetCustomAttributes(false);
+            var wantedAttributeType = typeof(HttpPostAttribute);
+
+            // Act
+            var result = attributes.FirstOrDefault(a => a.GetType() == wantedAttributeType);
+
+            // Assert
+            Assert.That(result, Is.Not.Null, $"No {wantedAttributeType.Name} found.");
+        }
+
         [Test]
         public async Task Post_ResetAuthenticator_RedirectsToEnableAuthenticator_WhenAuthenticationIsReset()
         {
@@ -1433,6 +1738,22 @@ namespace nikstra.CoreShopping.Web.Tests
         #endregion
 
         #region GenerateRecoveryCodesWarning() tests
+        [Test]
+        public void Get_GenerateRecoveryCodesWarning_ShouldHaveHttpGetAttribute()
+        {
+            // Arrange
+            var type = typeof(ManageController);
+            var method = type.GetMethod(nameof(ManageController.GenerateRecoveryCodesWarning), Type.EmptyTypes);
+            var attributes = method.GetCustomAttributes(false);
+            var wantedAttributeType = typeof(HttpGetAttribute);
+
+            // Act
+            var result = attributes.FirstOrDefault(a => a.GetType() == wantedAttributeType);
+
+            // Assert
+            Assert.That(result, Is.Not.Null, $"No {wantedAttributeType.Name} found.");
+        }
+
         [Test]
         public async Task Get_GenerateRecoveryCodesWarning_ReturnsViewGenerateRecoveryCodes_WhenUserHasTwoFactorEnabled()
         {
@@ -1500,6 +1821,22 @@ namespace nikstra.CoreShopping.Web.Tests
         #endregion
 
         #region GenerateRecoveryCodes() tests
+        [Test]
+        public void Post_GenerateRecoveryCodes_ShouldHaveHttpPostAttribute()
+        {
+            // Arrange
+            var type = typeof(ManageController);
+            var method = type.GetMethod(nameof(ManageController.GenerateRecoveryCodes), Type.EmptyTypes);
+            var attributes = method.GetCustomAttributes(false);
+            var wantedAttributeType = typeof(HttpPostAttribute);
+
+            // Act
+            var result = attributes.FirstOrDefault(a => a.GetType() == wantedAttributeType);
+
+            // Assert
+            Assert.That(result, Is.Not.Null, $"No {wantedAttributeType.Name} found.");
+        }
+
         [Test]
         public async Task Post_GenerateRecoveryCodes_ReturnsViewShowRecoveryCodesAndModel_WhenUserHasTwoFactorEnabled()
         {
