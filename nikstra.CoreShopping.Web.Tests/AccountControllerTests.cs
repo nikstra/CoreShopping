@@ -964,6 +964,9 @@ namespace nikstra.CoreShopping.Web.Tests
         public async Task Post_Logout_RedirectsToHomeIndex_WhenUserLogsOut()
         {
             // Arrange
+            var name = nameof(HomeController);
+            var redirectControllerName = name.Substring(0, name.LastIndexOf("Controller"));
+
             var userManager = CreateUserManagerStub();
             var signInManager = CreateSignInManagerStub(userManager);
             signInManager.SignOutAsync()
@@ -976,7 +979,7 @@ namespace nikstra.CoreShopping.Web.Tests
 
             // Assert
             Assert.That(result, Is.InstanceOf<RedirectToActionResult>());
-            Assert.That((result as RedirectToActionResult).ControllerName, Is.EqualTo(nameof(HomeController).Replace("Controller", "")));
+            Assert.That((result as RedirectToActionResult).ControllerName, Is.EqualTo(redirectControllerName));
             Assert.That((result as RedirectToActionResult).ActionName, Is.EqualTo(nameof(HomeController.Index)));
         }
         #endregion
@@ -1429,6 +1432,9 @@ namespace nikstra.CoreShopping.Web.Tests
         public async Task Get_ConfirmEmail_RedirectsToHomeIndex_WhenAnArgumentIsNull()
         {
             // Arrange
+            var name = nameof(HomeController);
+            var redirectControllerName = name.Substring(0, name.LastIndexOf("Controller"));
+
             var userManager = CreateUserManagerStub();
             var signInManager = CreateSignInManagerStub(userManager);
 
@@ -1439,7 +1445,7 @@ namespace nikstra.CoreShopping.Web.Tests
 
             // Assert
             Assert.That(result, Is.InstanceOf<RedirectToActionResult>());
-            Assert.That((result as RedirectToActionResult).ControllerName, Is.EqualTo(nameof(HomeController).Replace("Controller", "")));
+            Assert.That((result as RedirectToActionResult).ControllerName, Is.EqualTo(redirectControllerName));
             Assert.That((result as RedirectToActionResult).ActionName, Is.EqualTo(nameof(HomeController.Index)));
         }
 
