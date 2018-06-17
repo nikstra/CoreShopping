@@ -34,7 +34,7 @@ namespace nikstra.CoreShopping.Web.Tests
 
         #region Controller tests
         [Test]
-        public void Controller_ShouldHaveAuthorizeAttribute()
+        public void ManageController_ShouldHaveAuthorizeAttribute()
         {
             // Arrange
             var type = typeof(ManageController);
@@ -49,7 +49,7 @@ namespace nikstra.CoreShopping.Web.Tests
         }
 
         [Test]
-        public void ControllerMethods_WithHttpPostAttribute_ShouldHaveValidateAntiForgeryTokenAttribute()
+        public void ManageControllerMethods_WithHttpPostAttribute_ShouldHaveValidateAntiForgeryTokenAttribute()
         {
             // Arrange
             var type = typeof(ManageController);
