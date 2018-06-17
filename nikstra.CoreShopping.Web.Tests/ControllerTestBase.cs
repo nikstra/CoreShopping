@@ -173,7 +173,7 @@ namespace nikstra.CoreShopping.Web.Tests
             {
                 Scheme = scheme,
                 Host = host,
-                Path = controller.Replace("Controller", "/") + action
+                Path = $"{controller.Substring(0, controller.LastIndexOf("Controller"))}/{action}"
             };
 
             return ub.Uri;
