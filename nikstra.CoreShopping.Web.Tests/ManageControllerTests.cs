@@ -786,15 +786,8 @@ namespace nikstra.CoreShopping.Web.Tests
             signInManager.ConfigureExternalAuthenticationProperties(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
                 .Returns(new AuthenticationProperties());
 
-            // TODO: Refactor HttpContext stuff.
             var controller = CreateControllerInstance(signInManager);
-            controller.ControllerContext.HttpContext = new DefaultHttpContext();
-            controller.HttpContext.RequestServices = Substitute.For<IServiceProvider>();
-            controller.HttpContext.RequestServices.GetService(typeof(IAuthenticationService))
-                .Returns(Substitute.For<IAuthenticationService>());
-            controller.Url = Substitute.For<IUrlHelper>();
-            controller.Url.EmailConfirmationLink(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
-                .Returns("dummy url");
+            InjectControllerContextStub(controller, nameof(ManageController.LinkLogin));
 
             // Act
             var result = await controller.LinkLogin("provider");
@@ -821,13 +814,8 @@ namespace nikstra.CoreShopping.Web.Tests
                 .Returns(Task.FromResult(Substitute.For<ExternalLoginInfo>(
                     new ClaimsPrincipal(), "loginProvider", "providerKey", "displayName")));
 
-            // TODO: Refactor HttpContext stuff.
             var controller = CreateControllerInstance(signInManager);
-            controller.ControllerContext.HttpContext = new DefaultHttpContext();
-            controller.HttpContext.RequestServices = Substitute.For<IServiceProvider>();
-            controller.HttpContext.RequestServices.GetService(typeof(IAuthenticationService))
-                .Returns(Substitute.For<IAuthenticationService>());
-            controller.Url = Substitute.For<IUrlHelper>();
+            InjectControllerContextStub(controller, nameof(ManageController.LinkLoginCallback));
 
             // Act
             var result = await controller.LinkLoginCallback();
@@ -1236,10 +1224,8 @@ namespace nikstra.CoreShopping.Web.Tests
                 .Returns(Task.FromResult<IEnumerable<string>>(new List<string> { "1", "2", "3", "4", "5", "6", "7", "8", "9", "10" }));
             var signInManager = CreateSignInManagerStub(userManager);
 
-            // TODO: Refactor HttpContext stuff.
             var controller = CreateControllerInstance(signInManager);
-            controller.ControllerContext.HttpContext = new DefaultHttpContext();
-            controller.TempData = new TempDataDictionary(controller.HttpContext, Substitute.For<ITempDataProvider>());
+            InjectControllerContextStub(controller, nameof(ManageController.EnableAuthenticator));
 
             var model = new EnableAuthenticatorViewModel
             {
@@ -1348,10 +1334,8 @@ namespace nikstra.CoreShopping.Web.Tests
             var userManager = CreateUserManagerStub();
             var signInManager = CreateSignInManagerStub(userManager);
 
-            // TODO: Refactor HttpContext stuff.
             var controller = CreateControllerInstance(signInManager);
-            controller.ControllerContext.HttpContext = new DefaultHttpContext();
-            controller.TempData = new TempDataDictionary(controller.HttpContext, Substitute.For<ITempDataProvider>());
+            InjectControllerContextStub(controller, nameof(ManageController.ShowRecoveryCodes));
             controller.TempData["RecoveryCodesKey"] = new string[] { };
 
             // Act
@@ -1369,10 +1353,8 @@ namespace nikstra.CoreShopping.Web.Tests
             var userManager = CreateUserManagerStub();
             var signInManager = CreateSignInManagerStub(userManager);
 
-            // TODO: Refactor HttpContext stuff.
             var controller = CreateControllerInstance(signInManager);
-            controller.ControllerContext.HttpContext = new DefaultHttpContext();
-            controller.TempData = new TempDataDictionary(controller.HttpContext, Substitute.For<ITempDataProvider>());
+            InjectControllerContextStub(controller, nameof(ManageController.ShowRecoveryCodes));
             controller.TempData["RecoveryCodesKey"] = null;
 
             // Act
