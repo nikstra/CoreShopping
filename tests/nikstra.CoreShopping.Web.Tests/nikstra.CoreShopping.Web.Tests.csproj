@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\nikstra.CoreShopping.Web\nikstra.CoreShopping.Web.csproj" />
+    <ProjectReference Include="..\..\src\nikstra.CoreShopping.Web\nikstra.CoreShopping.Web.csproj" />
   </ItemGroup>
 
 </Project>

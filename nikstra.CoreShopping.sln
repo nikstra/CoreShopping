@@ -3,21 +3,21 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27428.2043
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "nikstra.CoreShopping.Web", "nikstra.CoreShopping.Web\nikstra.CoreShopping.Web.csproj", "{24FE17E8-A95F-4BF7-ADA8-5248ABBA043B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "nikstra.CoreShopping.Web", "src\nikstra.CoreShopping.Web\nikstra.CoreShopping.Web.csproj", "{24FE17E8-A95F-4BF7-ADA8-5248ABBA043B}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "nikstra.CoreShopping.Core", "nikstra.CoreShopping.Core\nikstra.CoreShopping.Core.csproj", "{AD71DDAB-988C-4C31-8916-A03C57670C12}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "nikstra.CoreShopping.Core", "src\nikstra.CoreShopping.Core\nikstra.CoreShopping.Core.csproj", "{AD71DDAB-988C-4C31-8916-A03C57670C12}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "nikstra.CoreShopping.Service", "nikstra.CoreShopping.Service\nikstra.CoreShopping.Service.csproj", "{A44DE362-3782-431F-B081-084A2B67E657}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "nikstra.CoreShopping.Service", "src\nikstra.CoreShopping.Service\nikstra.CoreShopping.Service.csproj", "{A44DE362-3782-431F-B081-084A2B67E657}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "nikstra.CoreShopping.Service.Tests", "nikstra.CoreShopping.Service.Tests\nikstra.CoreShopping.Service.Tests.csproj", "{A94B304B-68AB-43A1-803B-261307098123}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "nikstra.CoreShopping.Service.Tests", "tests\nikstra.CoreShopping.Service.Tests\nikstra.CoreShopping.Service.Tests.csproj", "{A94B304B-68AB-43A1-803B-261307098123}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "nikstra.CoreShopping.Core.Tests", "nikstra.CoreShopping.Core.Tests\nikstra.CoreShopping.Core.Tests.csproj", "{2EC6558B-912D-43AB-8AA8-9282193AF9C4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "nikstra.CoreShopping.Core.Tests", "tests\nikstra.CoreShopping.Core.Tests\nikstra.CoreShopping.Core.Tests.csproj", "{2EC6558B-912D-43AB-8AA8-9282193AF9C4}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "nikstra.CoreShopping.Web.Tests", "nikstra.CoreShopping.Web.Tests\nikstra.CoreShopping.Web.Tests.csproj", "{9F4910D4-8F1E-4F4A-A9B4-B765111A277A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "nikstra.CoreShopping.Web.Tests", "tests\nikstra.CoreShopping.Web.Tests\nikstra.CoreShopping.Web.Tests.csproj", "{9F4910D4-8F1E-4F4A-A9B4-B765111A277A}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Src", "Src", "{DDFE7391-D679-48A0-B430-C7B0A2B72E09}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{DDFE7391-D679-48A0-B430-C7B0A2B72E09}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{29A8CA2C-D714-4D52-8257-F437BF421995}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{29A8CA2C-D714-4D52-8257-F437BF421995}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
