@@ -1,8 +1,11 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using nikstra.CoreShopping.Service.Data;
+using nikstra.CoreShopping.Service.Models;
 using NUnit.Framework;
 using System;
+using System.Collections.Generic;
+using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -11,7 +14,7 @@ using System.Threading.Tasks;
 namespace nikstra.CoreShopping.Service.Tests
 {
     [TestFixture]
-    public class Class1
+    public class UserRepositoryTests
     {
         [Test]
         public async Task CreateUserOnContext()
@@ -80,6 +83,7 @@ namespace nikstra.CoreShopping.Service.Tests
                 await repo.CreateAsync(user, CancellationToken.None);
 
                 await repo.AddLoginAsync(user, new UserLoginInfo("LoginProvider", "ProviderKey", "DisplayName"), CancellationToken.None);
+                await repo.UpdateAsync(user);
             }
 
             using (var repo = new UserRepository(new UserDbContext(options)))
@@ -129,6 +133,46 @@ namespace nikstra.CoreShopping.Service.Tests
                 var roles = await repo.GetRolesAsync(user, CancellationToken.None);
                 Assert.That(roles.Count, Is.GreaterThan(0));
                 Assert.That(roles[0], Is.EqualTo("Admin"));
+            }
+        }
+
+        [Test]
+        public async Task GetUsersForClaimAsync_Test()
+        {
+            // Arrange
+            var options = new DbContextOptionsBuilder<UserDbContext>()
+                .UseInMemoryDatabase(databaseName: nameof(GetUsersForClaimAsync_Test))
+                .Options;
+
+            var user1 = new ShopUser("niklas@domain.tld");
+            user1.NormalizedUserName = user1.UserName.Normalize().ToUpperInvariant();
+
+            var user2 = new ShopUser("user@domain.tld");
+            user2.NormalizedUserName = user2.UserName.Normalize().ToUpperInvariant();
+
+            using (var repo = new UserRepository(new UserDbContext(options)))
+            {
+                await repo.CreateAsync(user1, CancellationToken.None);
+                await repo.CreateAsync(user2, CancellationToken.None);
+
+                await repo.AddClaimsAsync(user1, new[] { new Claim("type1", "value1") });
+                await repo.AddClaimsAsync(user2, new[] { new Claim("type1", "value1") });
+
+                await repo.UpdateAsync(user1);
+                await repo.UpdateAsync(user2);
+            }
+
+            // Act
+            IList<ShopUser> result;
+            using (var repo = new UserRepository(new UserDbContext(options)))
+            {
+                result = await repo.GetUsersForClaimAsync(new Claim("type1", "value1"));
+            }
+
+            // Assert
+            using (var repo = new UserRepository(new UserDbContext(options)))
+            {
+                Assert.That(result.Count, Is.EqualTo(2));
             }
         }
     }

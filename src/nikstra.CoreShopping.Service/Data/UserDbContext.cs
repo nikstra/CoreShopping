@@ -126,6 +126,6 @@ namespace nikstra.CoreShopping.Service.Data
         public DbSet<ShopRoleClaim> RoleClaims { get; set; }
         public DbSet<ShopUserLogin> UserLogins { get; set; }
         public DbSet<ShopUserToken> UserTokens { get; set; }
-        //public DbSet<ShopUserRole> UserRoles { get; set; }
+        public DbSet<ShopUserRole> UserRoles { get; set; }
     }
 }

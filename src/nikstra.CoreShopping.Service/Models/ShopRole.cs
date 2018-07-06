@@ -22,6 +22,8 @@ namespace nikstra.CoreShopping.Service.Models
         public virtual string NormalizedName { get; set; }
 
         public virtual ICollection<ShopUserRole> Users { get; set; }
+        public virtual ICollection<ShopRoleClaim> Claims { get; set; }
+
         public override string ToString()
         {
             return Name;
