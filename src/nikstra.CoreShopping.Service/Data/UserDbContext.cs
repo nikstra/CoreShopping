@@ -1,7 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using nikstra.CoreShopping.Service.Models;
-using nikstra.CoreShopping.Web.Models;
 using System;
 using System.Collections.Generic;
 using System.Text;

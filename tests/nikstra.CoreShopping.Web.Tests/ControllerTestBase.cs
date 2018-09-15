@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Net.Http.Headers;
+using nikstra.CoreShopping.Service.Models;
 using nikstra.CoreShopping.Web.Models;
 using NSubstitute;
 using NUnit.Framework;
@@ -43,8 +44,8 @@ namespace nikstra.CoreShopping.Web.Tests
             _scheme = null;
         }
 
-        protected virtual ApplicationUser CreateGoodApplicationUser() =>
-            new ApplicationUser
+        protected virtual ShopUser CreateGoodShopUser() =>
+            new ShopUser
             {
                 AccessFailedCount = 0,
                 ConcurrencyStamp = "abc",
@@ -63,26 +64,26 @@ namespace nikstra.CoreShopping.Web.Tests
                 UserName = "user@domain.tld"
             };
 
-        protected virtual UserManager<ApplicationUser> CreateUserManagerStub() =>
-            Substitute.For<UserManager<ApplicationUser>>(
-                Substitute.For<IUserStore<ApplicationUser>>(),
+        protected virtual UserManager<ShopUser> CreateUserManagerStub() =>
+            Substitute.For<UserManager<ShopUser>>(
+                Substitute.For<IUserStore<ShopUser>>(),
                 Substitute.For<IOptions<IdentityOptions>>(),
-                Substitute.For<IPasswordHasher<ApplicationUser>>(),
-                Substitute.For<IEnumerable<IUserValidator<ApplicationUser>>>(),
-                Substitute.For<IEnumerable<IPasswordValidator<ApplicationUser>>>(),
+                Substitute.For<IPasswordHasher<ShopUser>>(),
+                Substitute.For<IEnumerable<IUserValidator<ShopUser>>>(),
+                Substitute.For<IEnumerable<IPasswordValidator<ShopUser>>>(),
                 Substitute.For<ILookupNormalizer>(),
                 Substitute.For<IdentityErrorDescriber>(),
                 Substitute.For<IServiceProvider>(),
-                Substitute.For<ILogger<UserManager<ApplicationUser>>>()
+                Substitute.For<ILogger<UserManager<ShopUser>>>()
                 );
 
-        protected virtual SignInManager<ApplicationUser> CreateSignInManagerStub(UserManager<ApplicationUser> userManager) =>
-            Substitute.For<SignInManager<ApplicationUser>>(
+        protected virtual SignInManager<ShopUser> CreateSignInManagerStub(UserManager<ShopUser> userManager) =>
+            Substitute.For<SignInManager<ShopUser>>(
                 userManager,
                 Substitute.For<IHttpContextAccessor>(),
-                Substitute.For<IUserClaimsPrincipalFactory<ApplicationUser>>(),
+                Substitute.For<IUserClaimsPrincipalFactory<ShopUser>>(),
                 Substitute.For<IOptions<IdentityOptions>>(),
-                Substitute.For<ILogger<SignInManager<ApplicationUser>>>(),
+                Substitute.For<ILogger<SignInManager<ShopUser>>>(),
                 Substitute.For<IAuthenticationSchemeProvider>()
                 );
 
@@ -130,7 +131,7 @@ namespace nikstra.CoreShopping.Web.Tests
 
             httpContext.Session = Substitute.For<ISession>();
 
-            // TODO: This should relate to what is returned by CreateGoodApplicationUser().
+            // TODO: This should relate to what is returned by CreateGoodShopUser().
             ClaimsPrincipal user = Substitute.For<ClaimsPrincipal>();
             user.Identity.Name.Returns("UserName");
             user.Identity.IsAuthenticated.Returns(true);

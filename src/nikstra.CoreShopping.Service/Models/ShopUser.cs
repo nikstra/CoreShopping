@@ -34,10 +34,10 @@ namespace nikstra.CoreShopping.Service.Models
         public virtual bool TwoFactorEnabled { get; set; }
         public virtual string UserName { get; set; }
 
-        public virtual ICollection<ShopUserToken> Tokens { get; set; }
-        public virtual ICollection<ShopUserRole> Roles { get; set; }
-        public virtual ICollection<ShopUserLogin> Logins { get; set; }
-        public virtual ICollection<ShopUserClaim> Claims { get; set; }
+        public virtual ICollection<ShopUserToken> Tokens { get; set; } = new List<ShopUserToken>();
+        public virtual ICollection<ShopUserRole> Roles { get; set; } = new List<ShopUserRole>();
+        public virtual ICollection<ShopUserLogin> Logins { get; set; } = new List<ShopUserLogin>();
+        public virtual ICollection<ShopUserClaim> Claims { get; set; } = new List<ShopUserClaim>();
 
         public override string ToString()
         {

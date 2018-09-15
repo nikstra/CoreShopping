@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using nikstra.CoreShopping.Service.Models;
 using nikstra.CoreShopping.Web.Controllers;
 using nikstra.CoreShopping.Web.Models;
 using nikstra.CoreShopping.Web.Models.AccountViewModels;
@@ -21,7 +22,7 @@ namespace nikstra.CoreShopping.Web.Tests
     [TestFixture, SetCulture("en-US")]
     class AccountControllerTests : ControllerTestBase
     {
-        private AccountController CreateControllerInstance(SignInManager<ApplicationUser> signInManager) =>
+        private AccountController CreateControllerInstance(SignInManager<ShopUser> signInManager) =>
             new AccountController(
                 signInManager.UserManager,
                 signInManager,
@@ -338,7 +339,7 @@ namespace nikstra.CoreShopping.Web.Tests
             var userManager = CreateUserManagerStub();
             var signInManager = CreateSignInManagerStub(userManager);
             signInManager.GetTwoFactorAuthenticationUserAsync()
-                .Returns(Task.FromResult(CreateGoodApplicationUser()));
+                .Returns(Task.FromResult(CreateGoodShopUser()));
 
             var controller = CreateControllerInstance(signInManager);
 
@@ -359,7 +360,7 @@ namespace nikstra.CoreShopping.Web.Tests
             var userManager = CreateUserManagerStub();
             var signInManager = CreateSignInManagerStub(userManager);
             signInManager.GetTwoFactorAuthenticationUserAsync()
-                .Returns(Task.FromResult((ApplicationUser)null));
+                .Returns(Task.FromResult((ShopUser)null));
 
             var controller = CreateControllerInstance(signInManager);
 
@@ -415,7 +416,7 @@ namespace nikstra.CoreShopping.Web.Tests
             var userManager = CreateUserManagerStub();
             var signInManager = CreateSignInManagerStub(userManager);
             signInManager.GetTwoFactorAuthenticationUserAsync()
-                .Returns(Task.FromResult(CreateGoodApplicationUser()));
+                .Returns(Task.FromResult(CreateGoodShopUser()));
             signInManager.TwoFactorAuthenticatorSignInAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<bool>())
                 .Returns(Task.FromResult(Microsoft.AspNetCore.Identity.SignInResult.Success));
 
@@ -470,7 +471,7 @@ namespace nikstra.CoreShopping.Web.Tests
             var userManager = CreateUserManagerStub();
             var signInManager = CreateSignInManagerStub(userManager);
             signInManager.GetTwoFactorAuthenticationUserAsync()
-                .Returns(Task.FromResult(CreateGoodApplicationUser()));
+                .Returns(Task.FromResult(CreateGoodShopUser()));
             signInManager.TwoFactorAuthenticatorSignInAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<bool>())
                 .Returns(Task.FromResult(Microsoft.AspNetCore.Identity.SignInResult.LockedOut));
 
@@ -498,7 +499,7 @@ namespace nikstra.CoreShopping.Web.Tests
             var userManager = CreateUserManagerStub();
             var signInManager = CreateSignInManagerStub(userManager);
             signInManager.GetTwoFactorAuthenticationUserAsync()
-                .Returns(Task.FromResult(CreateGoodApplicationUser()));
+                .Returns(Task.FromResult(CreateGoodShopUser()));
             signInManager.TwoFactorAuthenticatorSignInAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<bool>())
                 .Returns(Task.FromResult(Microsoft.AspNetCore.Identity.SignInResult.Failed));
 
@@ -526,7 +527,7 @@ namespace nikstra.CoreShopping.Web.Tests
             var userManager = CreateUserManagerStub();
             var signInManager = CreateSignInManagerStub(userManager);
             signInManager.GetTwoFactorAuthenticationUserAsync()
-                .Returns(Task.FromResult((ApplicationUser)null));
+                .Returns(Task.FromResult((ShopUser)null));
 
             var controller = CreateControllerInstance(signInManager);
 
@@ -584,7 +585,7 @@ namespace nikstra.CoreShopping.Web.Tests
             var userManager = CreateUserManagerStub();
             var signInManager = CreateSignInManagerStub(userManager);
             signInManager.GetTwoFactorAuthenticationUserAsync()
-                .Returns(Task.FromResult(CreateGoodApplicationUser()));
+                .Returns(Task.FromResult(CreateGoodShopUser()));
 
             var controller = CreateControllerInstance(signInManager);
 
@@ -603,7 +604,7 @@ namespace nikstra.CoreShopping.Web.Tests
             var userManager = CreateUserManagerStub();
             var signInManager = CreateSignInManagerStub(userManager);
             signInManager.GetTwoFactorAuthenticationUserAsync()
-                .Returns(Task.FromResult((ApplicationUser)null));
+                .Returns(Task.FromResult((ShopUser)null));
 
             var controller = CreateControllerInstance(signInManager);
 
@@ -659,7 +660,7 @@ namespace nikstra.CoreShopping.Web.Tests
             var userManager = CreateUserManagerStub();
             var signInManager = CreateSignInManagerStub(userManager);
             signInManager.GetTwoFactorAuthenticationUserAsync()
-                .Returns(Task.FromResult(CreateGoodApplicationUser()));
+                .Returns(Task.FromResult(CreateGoodShopUser()));
             signInManager.TwoFactorRecoveryCodeSignInAsync(Arg.Any<string>())
                 .Returns(Task.FromResult(Microsoft.AspNetCore.Identity.SignInResult.Success));
 
@@ -707,7 +708,7 @@ namespace nikstra.CoreShopping.Web.Tests
             var userManager = CreateUserManagerStub();
             var signInManager = CreateSignInManagerStub(userManager);
             signInManager.GetTwoFactorAuthenticationUserAsync()
-                .Returns(Task.FromResult(CreateGoodApplicationUser()));
+                .Returns(Task.FromResult(CreateGoodShopUser()));
             signInManager.TwoFactorRecoveryCodeSignInAsync(Arg.Any<string>())
                 .Returns(Task.FromResult(Microsoft.AspNetCore.Identity.SignInResult.LockedOut));
 
@@ -733,7 +734,7 @@ namespace nikstra.CoreShopping.Web.Tests
             var userManager = CreateUserManagerStub();
             var signInManager = CreateSignInManagerStub(userManager);
             signInManager.GetTwoFactorAuthenticationUserAsync()
-                .Returns(Task.FromResult(CreateGoodApplicationUser()));
+                .Returns(Task.FromResult(CreateGoodShopUser()));
             signInManager.TwoFactorRecoveryCodeSignInAsync(Arg.Any<string>())
                 .Returns(Task.FromResult(Microsoft.AspNetCore.Identity.SignInResult.Failed));
 
@@ -759,7 +760,7 @@ namespace nikstra.CoreShopping.Web.Tests
             var userManager = CreateUserManagerStub();
             var signInManager = CreateSignInManagerStub(userManager);
             signInManager.GetTwoFactorAuthenticationUserAsync()
-                .Returns(Task.FromResult((ApplicationUser)null));
+                .Returns(Task.FromResult((ShopUser)null));
 
             var controller = CreateControllerInstance(signInManager);
 
@@ -916,12 +917,12 @@ namespace nikstra.CoreShopping.Web.Tests
         {
             // Arrange
             var userManager = CreateUserManagerStub();
-            userManager.CreateAsync(Arg.Any<ApplicationUser>(), Arg.Any<string>())
+            userManager.CreateAsync(Arg.Any<ShopUser>(), Arg.Any<string>())
                 .Returns(Task.FromResult(IdentityResult.Success));
-            userManager.GenerateEmailConfirmationTokenAsync(Arg.Any<ApplicationUser>())
+            userManager.GenerateEmailConfirmationTokenAsync(Arg.Any<ShopUser>())
                 .Returns(Task.FromResult("code"));
             var signInManager = CreateSignInManagerStub(userManager);
-            signInManager.SignInAsync(Arg.Any<ApplicationUser>(), Arg.Any<bool>())
+            signInManager.SignInAsync(Arg.Any<ShopUser>(), Arg.Any<bool>())
                 .Returns(Task.FromResult(0));
 
             var controller = CreateControllerInstance(signInManager);
@@ -947,7 +948,7 @@ namespace nikstra.CoreShopping.Web.Tests
         {
             // Arrange
             var userManager = CreateUserManagerStub();
-            userManager.CreateAsync(Arg.Any<ApplicationUser>(), Arg.Any<string>())
+            userManager.CreateAsync(Arg.Any<ShopUser>(), Arg.Any<string>())
                 .Returns(Task.FromResult(IdentityResult.Failed(
                     new IdentityError { Code = "code", Description = "description" })));
 
@@ -1264,14 +1265,14 @@ namespace nikstra.CoreShopping.Web.Tests
         {
             // Arrange
             var userManager = CreateUserManagerStub();
-            userManager.CreateAsync(Arg.Any<ApplicationUser>())
+            userManager.CreateAsync(Arg.Any<ShopUser>())
                 .Returns(Task.FromResult(IdentityResult.Success));
-            userManager.AddLoginAsync(Arg.Any<ApplicationUser>(), Arg.Any<UserLoginInfo>())
+            userManager.AddLoginAsync(Arg.Any<ShopUser>(), Arg.Any<UserLoginInfo>())
                 .Returns(Task.FromResult(IdentityResult.Success));
             var signInManager = CreateSignInManagerStub(userManager);
             signInManager.GetExternalLoginInfoAsync()
                 .Returns(Task.FromResult(new ExternalLoginInfo(new ClaimsPrincipal(), "provider", "key", "name")));
-            signInManager.SignInAsync(Arg.Any<ApplicationUser>(), Arg.Any<bool>())
+            signInManager.SignInAsync(Arg.Any<ShopUser>(), Arg.Any<bool>())
                 .Returns(Task.FromResult(0));
 
             var model = new ExternalLoginViewModel
@@ -1317,7 +1318,7 @@ namespace nikstra.CoreShopping.Web.Tests
         {
             // Arrange
             var userManager = CreateUserManagerStub();
-            userManager.CreateAsync(Arg.Any<ApplicationUser>())
+            userManager.CreateAsync(Arg.Any<ShopUser>())
                 .Returns(Task.FromResult(IdentityResult.Failed(new IdentityError { Code = "code", Description = "description" })));
             var signInManager = CreateSignInManagerStub(userManager);
             signInManager.GetExternalLoginInfoAsync()
@@ -1345,9 +1346,9 @@ namespace nikstra.CoreShopping.Web.Tests
         {
             // Arrange
             var userManager = CreateUserManagerStub();
-            userManager.CreateAsync(Arg.Any<ApplicationUser>())
+            userManager.CreateAsync(Arg.Any<ShopUser>())
                 .Returns(Task.FromResult(IdentityResult.Success));
-            userManager.AddLoginAsync(Arg.Any<ApplicationUser>(), Arg.Any<UserLoginInfo>())
+            userManager.AddLoginAsync(Arg.Any<ShopUser>(), Arg.Any<UserLoginInfo>())
                 .Returns(Task.FromResult(IdentityResult.Failed(new IdentityError { Code = "code", Description = "description" })));
             var signInManager = CreateSignInManagerStub(userManager);
             signInManager.GetExternalLoginInfoAsync()
@@ -1436,8 +1437,8 @@ namespace nikstra.CoreShopping.Web.Tests
             // Arrange
             var userManager = CreateUserManagerStub();
             userManager.FindByIdAsync(Arg.Any<string>())
-                .Returns(Task.FromResult(CreateGoodApplicationUser()));
-            userManager.ConfirmEmailAsync(Arg.Any<ApplicationUser>(), Arg.Any<string>())
+                .Returns(Task.FromResult(CreateGoodShopUser()));
+            userManager.ConfirmEmailAsync(Arg.Any<ShopUser>(), Arg.Any<string>())
                 .Returns(Task.FromResult(IdentityResult.Success));
             var signInManager = CreateSignInManagerStub(userManager);
 
@@ -1457,8 +1458,8 @@ namespace nikstra.CoreShopping.Web.Tests
             // Arrange
             var userManager = CreateUserManagerStub();
             userManager.FindByIdAsync(Arg.Any<string>())
-                .Returns(Task.FromResult(CreateGoodApplicationUser()));
-            userManager.ConfirmEmailAsync(Arg.Any<ApplicationUser>(), Arg.Any<string>())
+                .Returns(Task.FromResult(CreateGoodShopUser()));
+            userManager.ConfirmEmailAsync(Arg.Any<ShopUser>(), Arg.Any<string>())
                 .Returns(Task.FromResult(IdentityResult.Failed(new IdentityError { Code = "code", Description = "description" })));
             var signInManager = CreateSignInManagerStub(userManager);
 
@@ -1499,7 +1500,7 @@ namespace nikstra.CoreShopping.Web.Tests
             // Arrange
             var userManager = CreateUserManagerStub();
             userManager.FindByIdAsync(Arg.Any<string>())
-                .Returns(Task.FromResult((ApplicationUser)null));
+                .Returns(Task.FromResult((ShopUser)null));
             var signInManager = CreateSignInManagerStub(userManager);
 
             var controller = CreateControllerInstance(signInManager);
@@ -1605,10 +1606,10 @@ namespace nikstra.CoreShopping.Web.Tests
             // Arrange
             var userManager = CreateUserManagerStub();
             userManager.FindByEmailAsync(Arg.Any<string>())
-                .Returns(Task.FromResult(CreateGoodApplicationUser()));
-            userManager.IsEmailConfirmedAsync(Arg.Any<ApplicationUser>())
+                .Returns(Task.FromResult(CreateGoodShopUser()));
+            userManager.IsEmailConfirmedAsync(Arg.Any<ShopUser>())
                 .Returns(Task.FromResult(true));
-            userManager.GeneratePasswordResetTokenAsync(Arg.Any<ApplicationUser>())
+            userManager.GeneratePasswordResetTokenAsync(Arg.Any<ShopUser>())
                 .Returns(Task.FromResult("token"));
             var signInManager = CreateSignInManagerStub(userManager);
 
@@ -1654,8 +1655,8 @@ namespace nikstra.CoreShopping.Web.Tests
             // Arrange
             var userManager = CreateUserManagerStub();
             userManager.FindByEmailAsync(Arg.Any<string>())
-                .Returns(Task.FromResult((ApplicationUser)null));
-            userManager.IsEmailConfirmedAsync(Arg.Any<ApplicationUser>())
+                .Returns(Task.FromResult((ShopUser)null));
+            userManager.IsEmailConfirmedAsync(Arg.Any<ShopUser>())
                 .Returns(Task.FromResult(true));
             var signInManager = CreateSignInManagerStub(userManager);
 
@@ -1677,8 +1678,8 @@ namespace nikstra.CoreShopping.Web.Tests
             // Arrange
             var userManager = CreateUserManagerStub();
             userManager.FindByEmailAsync(Arg.Any<string>())
-                .Returns(Task.FromResult(CreateGoodApplicationUser()));
-            userManager.IsEmailConfirmedAsync(Arg.Any<ApplicationUser>())
+                .Returns(Task.FromResult(CreateGoodShopUser()));
+            userManager.IsEmailConfirmedAsync(Arg.Any<ShopUser>())
                 .Returns(Task.FromResult(false));
             var signInManager = CreateSignInManagerStub(userManager);
 
@@ -1856,8 +1857,8 @@ namespace nikstra.CoreShopping.Web.Tests
             // Arrange
             var userManager = CreateUserManagerStub();
             userManager.FindByEmailAsync(Arg.Any<string>())
-                .Returns(Task.FromResult(CreateGoodApplicationUser()));
-            userManager.ResetPasswordAsync(Arg.Any<ApplicationUser>(), Arg.Any<string>(), Arg.Any<string>())
+                .Returns(Task.FromResult(CreateGoodShopUser()));
+            userManager.ResetPasswordAsync(Arg.Any<ShopUser>(), Arg.Any<string>(), Arg.Any<string>())
                 .Returns(Task.FromResult(IdentityResult.Success));
             var signInManager = CreateSignInManagerStub(userManager);
 
@@ -1905,7 +1906,7 @@ namespace nikstra.CoreShopping.Web.Tests
             // Arrange
             var userManager = CreateUserManagerStub();
             userManager.FindByEmailAsync(Arg.Any<string>())
-                .Returns(Task.FromResult((ApplicationUser)null));
+                .Returns(Task.FromResult((ShopUser)null));
             var signInManager = CreateSignInManagerStub(userManager);
 
             var model = new ResetPasswordViewModel
@@ -1931,8 +1932,8 @@ namespace nikstra.CoreShopping.Web.Tests
             // Arrange
             var userManager = CreateUserManagerStub();
             userManager.FindByEmailAsync(Arg.Any<string>())
-                .Returns(Task.FromResult(CreateGoodApplicationUser()));
-            userManager.ResetPasswordAsync(Arg.Any<ApplicationUser>(), Arg.Any<string>(), Arg.Any<string>())
+                .Returns(Task.FromResult(CreateGoodShopUser()));
+            userManager.ResetPasswordAsync(Arg.Any<ShopUser>(), Arg.Any<string>(), Arg.Any<string>())
                 .Returns(Task.FromResult(IdentityResult.Failed(new IdentityError { Code = "code", Description = "description" })));
             var signInManager = CreateSignInManagerStub(userManager);
 

@@ -1,5 +1,5 @@
 ﻿@using nikstra.CoreShopping.Web.Views.Manage
-@inject SignInManager<ApplicationUser> SignInManager
+@inject SignInManager<ShopUser> SignInManager
 @{
     var hasExternalLogins = (await SignInManager.GetExternalAuthenticationSchemesAsync()).Any();
 }

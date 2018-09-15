@@ -15,6 +15,9 @@ using System.Threading.Tasks;
 // http://danderson.io/posts/using-your-own-database-schema-and-classes-with-asp-net-core-identity-and-entity-framework-core/
 // http://www.elemarjr.com/en/2017/05/writing-an-asp-net-core-identity-storage-provider-from-scratch-with-ravendb/
 
+// TODO: Implement IUserAuthenticationTokenStore<ShopUser> and/or IUserAuthenticatorKeyStore<ShopUser>.
+// If two-factor auth should be used or remove two-factor links in razor pages.
+
 namespace nikstra.CoreShopping.Service.Data
 {
     public class UserRepository :
