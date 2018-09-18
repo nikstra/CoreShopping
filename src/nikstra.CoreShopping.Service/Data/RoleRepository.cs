@@ -1,0 +1,137 @@
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using nikstra.CoreShopping.Service.Models;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace nikstra.CoreShopping.Service.Data
+{
+    public class RoleRepository : IRoleStore<ShopRole>
+    {
+        private UserDbContext _context;
+
+        public RoleRepository(UserDbContext context)
+        {
+            _context = context ?? throw new ArgumentNullException(nameof(context));
+        }
+
+        public async Task<IdentityResult> CreateAsync(ShopRole role, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            if (role == null) throw new ArgumentNullException(nameof(role));
+            cancellationToken.ThrowIfCancellationRequested();
+
+            _context.Roles.Add(role);
+            await _context.SaveChangesAsync();
+            return IdentityResult.Success;
+        }
+
+        public async Task<IdentityResult> DeleteAsync(ShopRole role, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            if (role == null) throw new ArgumentNullException(nameof(role));
+            cancellationToken.ThrowIfCancellationRequested();
+
+            _context.Roles.Remove(role);
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch(DbUpdateConcurrencyException)
+            {
+                // TODO: Should probably not create a new instance of IdentityErrorDescriber here!?
+                return IdentityResult.Failed(new IdentityErrorDescriber().ConcurrencyFailure());
+            }
+
+            return IdentityResult.Success;
+        }
+
+        public void Dispose()
+        {
+            _context?.Dispose();
+            _context = null;
+        }
+
+        public Task<ShopRole> FindByIdAsync(string roleId, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            if (string.IsNullOrWhiteSpace(roleId)) throw new ArgumentException($"{nameof(roleId)} cannot be null or empty.");
+            cancellationToken.ThrowIfCancellationRequested();
+
+            return _context.Roles.FirstOrDefaultAsync(r => r.Id == roleId, cancellationToken);
+        }
+
+        public Task<ShopRole> FindByNameAsync(string normalizedRoleName, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            if (string.IsNullOrWhiteSpace(normalizedRoleName)) throw new ArgumentException($"{nameof(normalizedRoleName)} cannot be null or empty.");
+            cancellationToken.ThrowIfCancellationRequested();
+
+            return _context.Roles.FirstOrDefaultAsync(r => r.NormalizedName == normalizedRoleName, cancellationToken);
+        }
+
+        public Task<string> GetNormalizedRoleNameAsync(ShopRole role, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            if (role == null) throw new ArgumentNullException(nameof(role));
+            cancellationToken.ThrowIfCancellationRequested();
+
+            return Task.FromResult(role.NormalizedName);
+        }
+
+        public Task<string> GetRoleIdAsync(ShopRole role, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            if (role == null) throw new ArgumentNullException(nameof(role));
+            cancellationToken.ThrowIfCancellationRequested();
+
+            return Task.FromResult(role.Id);
+        }
+
+        public Task<string> GetRoleNameAsync(ShopRole role, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            if (role == null) throw new ArgumentNullException(nameof(role));
+            cancellationToken.ThrowIfCancellationRequested();
+
+            return Task.FromResult(role.Name);
+        }
+
+        public Task SetNormalizedRoleNameAsync(ShopRole role, string normalizedName, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            if (role == null) throw new ArgumentNullException(nameof(role));
+            if (string.IsNullOrWhiteSpace(normalizedName)) throw new ArgumentException($"{nameof(normalizedName)} cannot be null or empty.");
+            cancellationToken.ThrowIfCancellationRequested();
+
+            role.NormalizedName = normalizedName;
+            return Task.CompletedTask;
+        }
+
+        public Task SetRoleNameAsync(ShopRole role, string roleName, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            if (role == null) throw new ArgumentNullException(nameof(role));
+            if (string.IsNullOrWhiteSpace(roleName)) throw new ArgumentException($"{nameof(roleName)} cannot be null or empty.");
+            cancellationToken.ThrowIfCancellationRequested();
+
+            role.Name = roleName;
+            return Task.CompletedTask;
+        }
+
+        public async Task<IdentityResult> UpdateAsync(ShopRole role, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            if (role == null) throw new ArgumentNullException(nameof(role));
+            cancellationToken.ThrowIfCancellationRequested();
+
+            _context.Attach(role);
+            role.ConcurrencyStamp = Guid.NewGuid().ToString(); // TODO: Figure out what ConcurrencyStamp is used for?
+            _context.Update(role);
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch(DbUpdateConcurrencyException)
+            {
+                // TODO: Should probably not create a new instance of IdentityErrorDescriber here!?
+                return IdentityResult.Failed(new IdentityErrorDescriber().ConcurrencyFailure());
+            }
+
+            return IdentityResult.Success;
+        }
+    }
+}
