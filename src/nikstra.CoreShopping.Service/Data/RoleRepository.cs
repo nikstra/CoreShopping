@@ -22,7 +22,7 @@ namespace nikstra.CoreShopping.Service.Data
             cancellationToken.ThrowIfCancellationRequested();
 
             _context.Roles.Add(role);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(cancellationToken);
             return IdentityResult.Success;
         }
 
@@ -35,7 +35,7 @@ namespace nikstra.CoreShopping.Service.Data
 
             try
             {
-                await _context.SaveChangesAsync();
+                await _context.SaveChangesAsync(cancellationToken);
             }
             catch(DbUpdateConcurrencyException)
             {
@@ -123,7 +123,7 @@ namespace nikstra.CoreShopping.Service.Data
 
             try
             {
-                await _context.SaveChangesAsync();
+                await _context.SaveChangesAsync(cancellationToken);
             }
             catch(DbUpdateConcurrencyException)
             {
