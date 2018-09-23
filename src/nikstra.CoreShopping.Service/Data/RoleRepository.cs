@@ -70,7 +70,8 @@ namespace nikstra.CoreShopping.Service.Data
         {
             if (string.IsNullOrWhiteSpace(roleId))
             {
-                throw new ArgumentException("Parameter cannot be null or empty.", nameof(roleId));
+                throw new ArgumentException(
+                    "Parameter cannot be null or whitespace.", nameof(roleId));
             }
 
             cancellationToken.ThrowIfCancellationRequested();
@@ -84,7 +85,8 @@ namespace nikstra.CoreShopping.Service.Data
         {
             if (string.IsNullOrWhiteSpace(normalizedRoleName))
             {
-                throw new ArgumentException("Parameter cannot be null or empty.", nameof(normalizedRoleName));
+                throw new ArgumentException(
+                    "Parameter cannot be null or whitespace.", nameof(normalizedRoleName));
             }
 
             cancellationToken.ThrowIfCancellationRequested();
@@ -146,7 +148,8 @@ namespace nikstra.CoreShopping.Service.Data
 
             if (string.IsNullOrWhiteSpace(normalizedName))
             {
-                throw new ArgumentException("Parameter cannot be null or empty.", nameof(normalizedName));
+                throw new ArgumentException(
+                    "Parameter cannot be null or whitespace.", nameof(normalizedName));
             }
 
             cancellationToken.ThrowIfCancellationRequested();
@@ -167,7 +170,8 @@ namespace nikstra.CoreShopping.Service.Data
 
             if (string.IsNullOrWhiteSpace(roleName))
             {
-                throw new ArgumentException("Parameter cannot be null or empty.", nameof(roleName));
+                throw new ArgumentException(
+                    "Parameter cannot be null or whitespace.", nameof(roleName));
             }
 
             cancellationToken.ThrowIfCancellationRequested();
