@@ -54,7 +54,7 @@ namespace nikstra.CoreShopping.Service.Data
 
         public Task<ShopRole> FindByIdAsync(string roleId, CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (string.IsNullOrWhiteSpace(roleId)) throw new ArgumentException($"{nameof(roleId)} cannot be null or empty.");
+            if (string.IsNullOrWhiteSpace(roleId)) throw new ArgumentException("Parameter cannot be null or empty.", nameof(roleId));
             cancellationToken.ThrowIfCancellationRequested();
 
             return _context.Roles.FirstOrDefaultAsync(r => r.Id == roleId, cancellationToken);
@@ -62,7 +62,7 @@ namespace nikstra.CoreShopping.Service.Data
 
         public Task<ShopRole> FindByNameAsync(string normalizedRoleName, CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (string.IsNullOrWhiteSpace(normalizedRoleName)) throw new ArgumentException($"{nameof(normalizedRoleName)} cannot be null or empty.");
+            if (string.IsNullOrWhiteSpace(normalizedRoleName)) throw new ArgumentException("Parameter cannot be null or empty.", nameof(normalizedRoleName));
             cancellationToken.ThrowIfCancellationRequested();
 
             return _context.Roles.FirstOrDefaultAsync(r => r.NormalizedName == normalizedRoleName, cancellationToken);
@@ -95,7 +95,7 @@ namespace nikstra.CoreShopping.Service.Data
         public Task SetNormalizedRoleNameAsync(ShopRole role, string normalizedName, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (role == null) throw new ArgumentNullException(nameof(role));
-            if (string.IsNullOrWhiteSpace(normalizedName)) throw new ArgumentException($"{nameof(normalizedName)} cannot be null or empty.");
+            if (string.IsNullOrWhiteSpace(normalizedName)) throw new ArgumentException("Parameter cannot be null or empty.", nameof(normalizedName));
             cancellationToken.ThrowIfCancellationRequested();
 
             role.NormalizedName = normalizedName;
@@ -105,7 +105,7 @@ namespace nikstra.CoreShopping.Service.Data
         public Task SetRoleNameAsync(ShopRole role, string roleName, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (role == null) throw new ArgumentNullException(nameof(role));
-            if (string.IsNullOrWhiteSpace(roleName)) throw new ArgumentException($"{nameof(roleName)} cannot be null or empty.");
+            if (string.IsNullOrWhiteSpace(roleName)) throw new ArgumentException("Parameter cannot be null or empty.", nameof(roleName));
             cancellationToken.ThrowIfCancellationRequested();
 
             role.Name = roleName;

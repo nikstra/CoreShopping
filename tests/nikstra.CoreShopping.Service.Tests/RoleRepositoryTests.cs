@@ -564,7 +564,7 @@ namespace nikstra.CoreShopping.Service.Tests
 
             // Assert
             var ex = Assert.ThrowsAsync<ArgumentException>(Act);
-            Assert.That(ex.Message, Does.StartWith("normalizedName"));
+            Assert.That(ex.ParamName, Is.EqualTo("normalizedName"));
         }
 
         [Test]
@@ -651,7 +651,7 @@ namespace nikstra.CoreShopping.Service.Tests
 
             // Assert
             var ex = Assert.ThrowsAsync<ArgumentException>(Act);
-            Assert.That(ex.Message, Does.StartWith("roleName"));
+            Assert.That(ex.ParamName, Is.EqualTo("roleName"));
         }
 
         [Test]
