@@ -114,7 +114,7 @@ namespace nikstra.CoreShopping.Service.Data
 
             if (string.IsNullOrWhiteSpace(roleName))
             {
-                throw new ArgumentException($"{nameof(roleName)} cannot be null or empty.");
+                throw new ArgumentException("Value cannot be null or empty.", nameof(roleName));
             }
 
             cancellationToken.ThrowIfCancellationRequested();
@@ -201,7 +201,7 @@ namespace nikstra.CoreShopping.Service.Data
         {
             if (string.IsNullOrWhiteSpace(normalizedEmail))
             {
-                throw new ArgumentException($"{nameof(normalizedEmail)} cannot be null or empty.");
+                throw new ArgumentException("Value cannot be null or empty.", nameof(normalizedEmail));
             }
 
             cancellationToken.ThrowIfCancellationRequested();
@@ -216,7 +216,7 @@ namespace nikstra.CoreShopping.Service.Data
         {
             if (string.IsNullOrWhiteSpace(userId))
             {
-                throw new ArgumentException($"{nameof(userId)} cannot be null or empty.");
+                throw new ArgumentException("Value cannot be null or empty.", nameof(userId));
             }
 
             cancellationToken.ThrowIfCancellationRequested();
@@ -232,12 +232,12 @@ namespace nikstra.CoreShopping.Service.Data
         {
             if (string.IsNullOrWhiteSpace(loginProvider))
             {
-                throw new ArgumentException($"{nameof(loginProvider)} cannot be null or empty.");
+                throw new ArgumentException("Value cannot be null or empty.", nameof(loginProvider));
             }
 
             if (string.IsNullOrWhiteSpace(providerKey))
             {
-                throw new ArgumentException($"{nameof(providerKey)} cannot be null or empty.");
+                throw new ArgumentException("Value cannot be null or empty.", nameof(providerKey));
             }
 
             cancellationToken.ThrowIfCancellationRequested();
@@ -260,7 +260,7 @@ namespace nikstra.CoreShopping.Service.Data
         {
             if (string.IsNullOrWhiteSpace(normalizedUserName))
             {
-                throw new ArgumentException($"{nameof(normalizedUserName)} cannot be null or empty.");
+                throw new ArgumentException("Value cannot be null or empty.", nameof(normalizedUserName));
             }
 
             cancellationToken.ThrowIfCancellationRequested();
@@ -496,12 +496,12 @@ namespace nikstra.CoreShopping.Service.Data
 
             if (string.IsNullOrWhiteSpace(loginProvider))
             {
-                throw new ArgumentException($"{nameof(loginProvider)} cannot be null or empty.");
+                throw new ArgumentException("Value cannot be null or empty.", nameof(loginProvider));
             }
 
             if (string.IsNullOrWhiteSpace(name))
             {
-                throw new ArgumentException($"{nameof(name)} cannot be null or empty.");
+                throw new ArgumentException("Value cannot be null or empty.", nameof(name));
             }
 
             cancellationToken.ThrowIfCancellationRequested();
@@ -579,7 +579,7 @@ namespace nikstra.CoreShopping.Service.Data
         {
             if (string.IsNullOrWhiteSpace(roleName))
             {
-                throw new ArgumentException($"{nameof(roleName)} cannot be null or empty.");
+                throw new ArgumentException("Value cannot be null or empty.", nameof(roleName));
             }
 
             cancellationToken.ThrowIfCancellationRequested();
@@ -641,7 +641,7 @@ namespace nikstra.CoreShopping.Service.Data
 
             if (string.IsNullOrWhiteSpace(roleName))
             {
-                throw new ArgumentException($"{nameof(roleName)} cannot be null or empty.");
+                throw new ArgumentException("Value cannot be null or empty.", nameof(roleName));
             }
 
             cancellationToken.ThrowIfCancellationRequested();
@@ -668,7 +668,7 @@ namespace nikstra.CoreShopping.Service.Data
 
             if (string.IsNullOrWhiteSpace(code))
             {
-                throw new ArgumentException($"{nameof(code)} cannot be null or empty.");
+                throw new ArgumentException("Value cannot be null or empty.", nameof(code));
             }
 
             cancellationToken.ThrowIfCancellationRequested();
@@ -729,7 +729,7 @@ namespace nikstra.CoreShopping.Service.Data
 
             if (string.IsNullOrWhiteSpace(roleName))
             {
-                throw new ArgumentException($"{nameof(roleName)} cannot be null or empty.");
+                throw new ArgumentException("Value cannot be null or empty.", nameof(roleName));
             }
 
             cancellationToken.ThrowIfCancellationRequested();
@@ -758,12 +758,12 @@ namespace nikstra.CoreShopping.Service.Data
 
             if (string.IsNullOrWhiteSpace(loginProvider))
             {
-                throw new ArgumentException($"{nameof(loginProvider)} cannot be null or empty.");
+                throw new ArgumentException("Value cannot be null or empty.", nameof(loginProvider));
             }
 
             if (string.IsNullOrWhiteSpace(providerKey))
             {
-                throw new ArgumentException($"{nameof(providerKey)} cannot be null or empty.");
+                throw new ArgumentException("Value cannot be null or empty.", nameof(providerKey));
             }
 
             cancellationToken.ThrowIfCancellationRequested();
@@ -792,12 +792,12 @@ namespace nikstra.CoreShopping.Service.Data
 
             if (string.IsNullOrWhiteSpace(loginProvider))
             {
-                throw new ArgumentException($"{nameof(loginProvider)} cannot be null or empty.");
+                throw new ArgumentException("Value cannot be null or empty.", nameof(loginProvider));
             }
 
             if (string.IsNullOrWhiteSpace(name))
             {
-                throw new ArgumentException($"{nameof(name)} cannot be null or empty.");
+                throw new ArgumentException("Value cannot be null or empty.", nameof(name));
             }
 
             cancellationToken.ThrowIfCancellationRequested();
@@ -880,7 +880,7 @@ namespace nikstra.CoreShopping.Service.Data
 
             if (string.IsNullOrWhiteSpace(email))
             {
-                throw new ArgumentException($"{nameof(email)} cannot be null or empty.");
+                throw new ArgumentException("Value cannot be null or empty.", nameof(email));
             }
 
             cancellationToken.ThrowIfCancellationRequested();
@@ -949,7 +949,7 @@ namespace nikstra.CoreShopping.Service.Data
 
             if (string.IsNullOrWhiteSpace(normalizedEmail))
             {
-                throw new ArgumentException($"{nameof(normalizedEmail)} cannot be null or empty.");
+                throw new ArgumentException("Value cannot be null or empty.", nameof(normalizedEmail));
             }
 
             cancellationToken.ThrowIfCancellationRequested();
@@ -970,7 +970,7 @@ namespace nikstra.CoreShopping.Service.Data
 
             if (string.IsNullOrWhiteSpace(normalizedName))
             {
-                throw new ArgumentException($"{nameof(normalizedName)} cannot be null or empty.");
+                throw new ArgumentException("Value cannot be null or empty.", nameof(normalizedName));
             }
 
             cancellationToken.ThrowIfCancellationRequested();
@@ -991,7 +991,7 @@ namespace nikstra.CoreShopping.Service.Data
 
             if (string.IsNullOrWhiteSpace(passwordHash))
             {
-                throw new ArgumentException($"{nameof(passwordHash)} cannot be null or empty.");
+                throw new ArgumentException("Value cannot be null or empty.", nameof(passwordHash));
             }
 
             cancellationToken.ThrowIfCancellationRequested();
@@ -1012,7 +1012,7 @@ namespace nikstra.CoreShopping.Service.Data
 
             if (string.IsNullOrWhiteSpace(phoneNumber))
             {
-                throw new ArgumentException($"{nameof(phoneNumber)} cannot be null or empty.");
+                throw new ArgumentException("Value cannot be null or empty.", nameof(phoneNumber));
             }
 
             cancellationToken.ThrowIfCancellationRequested();
@@ -1049,7 +1049,7 @@ namespace nikstra.CoreShopping.Service.Data
 
             if (string.IsNullOrWhiteSpace(stamp))
             {
-                throw new ArgumentException($"{nameof(stamp)} cannot be null or empty.");
+                throw new ArgumentException("Value cannot be null or empty.", nameof(stamp));
             }
 
             cancellationToken.ThrowIfCancellationRequested();
@@ -1072,12 +1072,12 @@ namespace nikstra.CoreShopping.Service.Data
 
             if (string.IsNullOrWhiteSpace(loginProvider))
             {
-                throw new ArgumentException($"{nameof(loginProvider)} cannot be null or empty.");
+                throw new ArgumentException("Value cannot be null or empty.", nameof(loginProvider));
             }
 
             if (string.IsNullOrWhiteSpace(name))
             {
-                throw new ArgumentException($"{nameof(name)} cannot be null or empty.");
+                throw new ArgumentException("Value cannot be null or empty.", nameof(name));
             }
 
             cancellationToken.ThrowIfCancellationRequested();
@@ -1127,7 +1127,7 @@ namespace nikstra.CoreShopping.Service.Data
 
             if (string.IsNullOrWhiteSpace(userName))
             {
-                throw new ArgumentException($"{nameof(userName)} cannot be null or empty.");
+                throw new ArgumentException("Value cannot be null or empty.", nameof(userName));
             }
 
             cancellationToken.ThrowIfCancellationRequested();
