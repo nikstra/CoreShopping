@@ -18,20 +18,20 @@ using System.Threading.Tasks;
 namespace nikstra.CoreShopping.Service.Data
 {
     public class UserRepository :
-        IUserStore<ShopUser>,
+        IQueryableUserStore<ShopUser>,
+        IUserAuthenticationTokenStore<ShopUser>,
+        IUserAuthenticatorKeyStore<ShopUser>,
         IUserClaimStore<ShopUser>,
-        IUserLoginStore<ShopUser>,
-        IUserRoleStore<ShopUser>,
-        IUserPasswordStore<ShopUser>,
-        IUserSecurityStampStore<ShopUser>,
-        IUserTwoFactorStore<ShopUser>,
-        IUserPhoneNumberStore<ShopUser>,
         IUserEmailStore<ShopUser>,
         IUserLockoutStore<ShopUser>,
-        IQueryableUserStore<ShopUser>,
-        IUserAuthenticatorKeyStore<ShopUser>,
+        IUserLoginStore<ShopUser>,
+        IUserPasswordStore<ShopUser>,
+        IUserPhoneNumberStore<ShopUser>,
+        IUserRoleStore<ShopUser>,
+        IUserSecurityStampStore<ShopUser>,
+        IUserStore<ShopUser>,
         IUserTwoFactorRecoveryCodeStore<ShopUser>,
-        IUserAuthenticationTokenStore<ShopUser>
+        IUserTwoFactorStore<ShopUser>
     {
         private const string _internalLoginProvider = "[nikstraUserRepository]";
         private const string _authenticatorKeyTokenName = "AuthenticatorKey";
@@ -39,7 +39,11 @@ namespace nikstra.CoreShopping.Service.Data
 
         private UserDbContext _context;
 
-        private Task<ShopUserToken> FindTokenAsync(ShopUser user, string providerName, string tokenName, CancellationToken cancellationToken) =>
+        private Task<ShopUserToken> FindTokenAsync(
+            ShopUser user,
+            string providerName,
+            string tokenName,
+            CancellationToken cancellationToken) =>
             _context.UserTokens.FindAsync(new object[] { providerName, tokenName, user.Id }, cancellationToken);
 
         public UserRepository(UserDbContext context)
@@ -49,10 +53,21 @@ namespace nikstra.CoreShopping.Service.Data
 
         public IQueryable<ShopUser> Users => _context.Users;
 
-        public Task AddClaimsAsync(ShopUser user, IEnumerable<Claim> claims, CancellationToken cancellationToken = default(CancellationToken))
+        public Task AddClaimsAsync(
+            ShopUser user,
+            IEnumerable<Claim> claims,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (user == null) throw new ArgumentNullException(nameof(user));
-            if (claims == null) throw new ArgumentNullException(nameof(claims));
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            if (claims == null)
+            {
+                throw new ArgumentNullException(nameof(claims));
+            }
+
             cancellationToken.ThrowIfCancellationRequested();
 
             _context.UserClaims.AddRange(claims.Select(c =>
@@ -61,10 +76,21 @@ namespace nikstra.CoreShopping.Service.Data
             return Task.CompletedTask;
         }
 
-        public async Task AddLoginAsync(ShopUser user, UserLoginInfo login, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task AddLoginAsync(
+            ShopUser user,
+            UserLoginInfo login,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (user == null) throw new ArgumentNullException(nameof(user));
-            if (login == null) throw new ArgumentNullException(nameof(login));
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            if (login == null)
+            {
+                throw new ArgumentNullException(nameof(login));
+            }
+
             cancellationToken.ThrowIfCancellationRequested();
 
             await _context.UserLogins.AddAsync(new ShopUserLogin
@@ -76,10 +102,21 @@ namespace nikstra.CoreShopping.Service.Data
             }, cancellationToken);
         }
 
-        public async Task AddToRoleAsync(ShopUser user, string roleName, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task AddToRoleAsync(
+            ShopUser user,
+            string roleName,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (user == null) throw new ArgumentNullException(nameof(user));
-            if (string.IsNullOrWhiteSpace(roleName)) throw new ArgumentException($"{nameof(roleName)} cannot be null or empty.");
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            if (string.IsNullOrWhiteSpace(roleName))
+            {
+                throw new ArgumentException($"{nameof(roleName)} cannot be null or empty.");
+            }
+
             cancellationToken.ThrowIfCancellationRequested();
 
             var role = await _context.Roles.SingleOrDefaultAsync(r => r.Name == roleName) ??
@@ -94,18 +131,31 @@ namespace nikstra.CoreShopping.Service.Data
             user.Roles.Add(userRole);
         }
 
-        public async Task<int> CountCodesAsync(ShopUser user, CancellationToken cancellationToken)
+        public async Task<int> CountCodesAsync(
+            ShopUser user,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (user == null) throw new ArgumentNullException(nameof(user));
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
             cancellationToken.ThrowIfCancellationRequested();
 
-            var tokens = await GetTokenAsync(user, _internalLoginProvider, _recoveryCodeTokenName, cancellationToken) ?? string.Empty;
+            var tokens = await GetTokenAsync(user, _internalLoginProvider,
+                _recoveryCodeTokenName, cancellationToken) ?? string.Empty;
             return tokens.Length > 0 ? tokens.Split(";").Length : 0;
         }
 
-        public async Task<IdentityResult> CreateAsync(ShopUser user, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<IdentityResult> CreateAsync(
+            ShopUser user,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (user == null) throw new ArgumentNullException(nameof(user));
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
             cancellationToken.ThrowIfCancellationRequested();
 
             _context.Users.Add(user);
@@ -113,9 +163,15 @@ namespace nikstra.CoreShopping.Service.Data
             return IdentityResult.Success;
         }
 
-        public async Task<IdentityResult> DeleteAsync(ShopUser user, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<IdentityResult> DeleteAsync(
+            ShopUser user,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (user == null) throw new ArgumentNullException(nameof(user));
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
             cancellationToken.ThrowIfCancellationRequested();
 
             _context.Users.Remove(user);
@@ -139,30 +195,56 @@ namespace nikstra.CoreShopping.Service.Data
             _context = null;
         }
 
-        public Task<ShopUser> FindByEmailAsync(string normalizedEmail, CancellationToken cancellationToken = default(CancellationToken))
+        public Task<ShopUser> FindByEmailAsync(
+            string normalizedEmail,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (string.IsNullOrWhiteSpace(normalizedEmail)) throw new ArgumentException($"{nameof(normalizedEmail)} cannot be null or empty.");
+            if (string.IsNullOrWhiteSpace(normalizedEmail))
+            {
+                throw new ArgumentException($"{nameof(normalizedEmail)} cannot be null or empty.");
+            }
+
             cancellationToken.ThrowIfCancellationRequested();
 
-            return IncludeUsersNavigationProperties(_context.Users).FirstOrDefaultAsync(u => u.NormalizedEmail == normalizedEmail);
+            return IncludeUsersNavigationProperties(_context.Users)
+                .FirstOrDefaultAsync(u => u.NormalizedEmail == normalizedEmail);
         }
 
-        public Task<ShopUser> FindByIdAsync(string userId, CancellationToken cancellationToken = default(CancellationToken))
+        public Task<ShopUser> FindByIdAsync(
+            string userId,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (string.IsNullOrWhiteSpace(userId)) throw new ArgumentException($"{nameof(userId)} cannot be null or empty.");
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                throw new ArgumentException($"{nameof(userId)} cannot be null or empty.");
+            }
+
             cancellationToken.ThrowIfCancellationRequested();
 
-            return IncludeUsersNavigationProperties(_context.Users).FirstOrDefaultAsync(u => u.Id == userId);
+            return IncludeUsersNavigationProperties(_context.Users)
+                .FirstOrDefaultAsync(u => u.Id == userId);
         }
 
-        public async Task<ShopUser> FindByLoginAsync(string loginProvider, string providerKey, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<ShopUser> FindByLoginAsync(
+            string loginProvider,
+            string providerKey,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (string.IsNullOrWhiteSpace(loginProvider)) throw new ArgumentException($"{nameof(loginProvider)} cannot be null or empty.");
-            if (string.IsNullOrWhiteSpace(providerKey)) throw new ArgumentException($"{nameof(providerKey)} cannot be null or empty.");
+            if (string.IsNullOrWhiteSpace(loginProvider))
+            {
+                throw new ArgumentException($"{nameof(loginProvider)} cannot be null or empty.");
+            }
+
+            if (string.IsNullOrWhiteSpace(providerKey))
+            {
+                throw new ArgumentException($"{nameof(providerKey)} cannot be null or empty.");
+            }
+
             cancellationToken.ThrowIfCancellationRequested();
 
             var userLogin = await _context.UserLogins
-                .SingleOrDefaultAsync(ul => ul.LoginProvider == loginProvider && ul.ProviderKey == providerKey, cancellationToken);
+                .SingleOrDefaultAsync(ul => ul.LoginProvider == loginProvider &&
+                    ul.ProviderKey == providerKey, cancellationToken);
 
             if (userLogin != null)
             {
@@ -172,74 +254,129 @@ namespace nikstra.CoreShopping.Service.Data
             return null;
         }
 
-        public Task<ShopUser> FindByNameAsync(string normalizedUserName, CancellationToken cancellationToken = default(CancellationToken))
+        public Task<ShopUser> FindByNameAsync(
+            string normalizedUserName,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (string.IsNullOrWhiteSpace(normalizedUserName)) throw new ArgumentException($"{nameof(normalizedUserName)} cannot be null or empty.");
+            if (string.IsNullOrWhiteSpace(normalizedUserName))
+            {
+                throw new ArgumentException($"{nameof(normalizedUserName)} cannot be null or empty.");
+            }
+
             cancellationToken.ThrowIfCancellationRequested();
 
             return IncludeUsersNavigationProperties(_context.Users)
                 .FirstOrDefaultAsync(u => u.NormalizedUserName == normalizedUserName, cancellationToken);
         }
 
-        public Task<int> GetAccessFailedCountAsync(ShopUser user, CancellationToken cancellationToken = default(CancellationToken))
+        public Task<int> GetAccessFailedCountAsync(
+            ShopUser user,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (user == null) throw new ArgumentNullException(nameof(user));
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
             cancellationToken.ThrowIfCancellationRequested();
 
             return Task.FromResult(user.AccessFailedCount);
         }
 
-        public Task<string> GetAuthenticatorKeyAsync(ShopUser user, CancellationToken cancellationToken)
+        public Task<string> GetAuthenticatorKeyAsync(
+            ShopUser user,
+            CancellationToken cancellationToken)
         {
-            if (user == null) throw new ArgumentNullException(nameof(user));
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
             cancellationToken.ThrowIfCancellationRequested();
 
             return GetTokenAsync(user, _internalLoginProvider, _authenticatorKeyTokenName, cancellationToken);
         }
 
-        public Task<IList<Claim>> GetClaimsAsync(ShopUser user, CancellationToken cancellationToken = default(CancellationToken))
+        public Task<IList<Claim>> GetClaimsAsync(
+            ShopUser user,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (user == null) throw new ArgumentNullException(nameof(user));
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
             cancellationToken.ThrowIfCancellationRequested();
 
-            return Task.FromResult<IList<Claim>>(user.Claims.Select(c => new Claim(c.ClaimType, c.ClaimValue)).ToList());
+            return Task.FromResult<IList<Claim>>(user.Claims
+                .Select(c => new Claim(c.ClaimType, c.ClaimValue)).ToList());
         }
 
-        public Task<string> GetEmailAsync(ShopUser user, CancellationToken cancellationToken = default(CancellationToken))
+        public Task<string> GetEmailAsync(
+            ShopUser user,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (user == null) throw new ArgumentNullException(nameof(user));
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
             cancellationToken.ThrowIfCancellationRequested();
 
             return Task.FromResult(user.Email);
         }
 
-        public Task<bool> GetEmailConfirmedAsync(ShopUser user, CancellationToken cancellationToken = default(CancellationToken))
+        public Task<bool> GetEmailConfirmedAsync(
+            ShopUser user,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (user == null) throw new ArgumentNullException(nameof(user));
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
             cancellationToken.ThrowIfCancellationRequested();
 
             return Task.FromResult(user.EmailConfirmed);
         }
 
-        public Task<bool> GetLockoutEnabledAsync(ShopUser user, CancellationToken cancellationToken = default(CancellationToken))
+        public Task<bool> GetLockoutEnabledAsync(
+            ShopUser user,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (user == null) throw new ArgumentNullException(nameof(user));
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
             cancellationToken.ThrowIfCancellationRequested();
 
             return Task.FromResult(user.LockoutEnabled);
         }
 
-        public Task<DateTimeOffset?> GetLockoutEndDateAsync(ShopUser user, CancellationToken cancellationToken = default(CancellationToken))
+        public Task<DateTimeOffset?> GetLockoutEndDateAsync(
+            ShopUser user,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (user == null) throw new ArgumentNullException(nameof(user));
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
             cancellationToken.ThrowIfCancellationRequested();
 
             return Task.FromResult(user.LockoutEnd);
         }
 
-        public async Task<IList<UserLoginInfo>> GetLoginsAsync(ShopUser user, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<IList<UserLoginInfo>> GetLoginsAsync(
+            ShopUser user,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (user == null) throw new ArgumentNullException(nameof(user));
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
             cancellationToken.ThrowIfCancellationRequested();
 
             return await _context.UserLogins
@@ -248,100 +385,183 @@ namespace nikstra.CoreShopping.Service.Data
                 .ToListAsync();
         }
 
-        public Task<string> GetNormalizedEmailAsync(ShopUser user, CancellationToken cancellationToken = default(CancellationToken))
+        public Task<string> GetNormalizedEmailAsync(
+            ShopUser user,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (user == null) throw new ArgumentNullException(nameof(user));
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
             cancellationToken.ThrowIfCancellationRequested();
 
             return Task.FromResult(user.NormalizedEmail);
         }
 
-        public Task<string> GetNormalizedUserNameAsync(ShopUser user, CancellationToken cancellationToken = default(CancellationToken))
+        public Task<string> GetNormalizedUserNameAsync(
+            ShopUser user,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (user == null) throw new ArgumentNullException(nameof(user));
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
             cancellationToken.ThrowIfCancellationRequested();
 
             return Task.FromResult(user.NormalizedUserName);
         }
 
-        public Task<string> GetPasswordHashAsync(ShopUser user, CancellationToken cancellationToken = default(CancellationToken))
+        public Task<string> GetPasswordHashAsync(
+            ShopUser user,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (user == null) throw new ArgumentNullException(nameof(user));
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
             cancellationToken.ThrowIfCancellationRequested();
 
             return Task.FromResult(user.PasswordHash);
         }
 
-        public Task<string> GetPhoneNumberAsync(ShopUser user, CancellationToken cancellationToken = default(CancellationToken))
+        public Task<string> GetPhoneNumberAsync(
+            ShopUser user,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (user == null) throw new ArgumentNullException(nameof(user));
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
             cancellationToken.ThrowIfCancellationRequested();
 
             return Task.FromResult(user.PhoneNumber);
         }
 
-        public Task<bool> GetPhoneNumberConfirmedAsync(ShopUser user, CancellationToken cancellationToken = default(CancellationToken))
+        public Task<bool> GetPhoneNumberConfirmedAsync(
+            ShopUser user,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (user == null) throw new ArgumentNullException(nameof(user));
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
             cancellationToken.ThrowIfCancellationRequested();
 
             return Task.FromResult(user.PhoneNumberConfirmed);
         }
 
-        public Task<IList<string>> GetRolesAsync(ShopUser user, CancellationToken cancellationToken = default(CancellationToken))
+        public Task<IList<string>> GetRolesAsync(
+            ShopUser user,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (user == null) throw new ArgumentNullException(nameof(user));
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
             cancellationToken.ThrowIfCancellationRequested();
 
             return Task.FromResult<IList<string>>(user.Roles.Select(x => x.ShopRole.Name).ToList());
         }
 
-        public Task<string> GetSecurityStampAsync(ShopUser user, CancellationToken cancellationToken = default(CancellationToken))
+        public Task<string> GetSecurityStampAsync(
+            ShopUser user,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (user == null) throw new ArgumentNullException(nameof(user));
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
             cancellationToken.ThrowIfCancellationRequested();
 
             return Task.FromResult(user.SecurityStamp);
         }
 
-        public async Task<string> GetTokenAsync(ShopUser user, string loginProvider, string name, CancellationToken cancellationToken)
+        public async Task<string> GetTokenAsync(
+            ShopUser user,
+            string loginProvider,
+            string name,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (user == null) throw new ArgumentNullException(nameof(user));
-            if (string.IsNullOrWhiteSpace(loginProvider)) throw new ArgumentException($"{nameof(loginProvider)} cannot be null or empty.");
-            if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException($"{nameof(name)} cannot be null or empty.");
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            if (string.IsNullOrWhiteSpace(loginProvider))
+            {
+                throw new ArgumentException($"{nameof(loginProvider)} cannot be null or empty.");
+            }
+
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                throw new ArgumentException($"{nameof(name)} cannot be null or empty.");
+            }
+
             cancellationToken.ThrowIfCancellationRequested();
 
-            var entry = await FindTokenAsync(user, _internalLoginProvider, _authenticatorKeyTokenName, cancellationToken);
+            var entry = await FindTokenAsync(user, _internalLoginProvider,
+                _authenticatorKeyTokenName, cancellationToken);
             return entry?.Value;
         }
 
-        public Task<bool> GetTwoFactorEnabledAsync(ShopUser user, CancellationToken cancellationToken = default(CancellationToken))
+        public Task<bool> GetTwoFactorEnabledAsync(
+            ShopUser user,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (user == null) throw new ArgumentNullException(nameof(user));
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
             cancellationToken.ThrowIfCancellationRequested();
 
             return Task.FromResult(user.TwoFactorEnabled);
         }
 
-        public Task<string> GetUserIdAsync(ShopUser user, CancellationToken cancellationToken = default(CancellationToken))
+        public Task<string> GetUserIdAsync(
+            ShopUser user,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (user == null) throw new ArgumentNullException(nameof(user));
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
             cancellationToken.ThrowIfCancellationRequested();
 
             return Task.FromResult(user.Id);
         }
 
-        public Task<string> GetUserNameAsync(ShopUser user, CancellationToken cancellationToken = default(CancellationToken))
+        public Task<string> GetUserNameAsync(
+            ShopUser user,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (user == null) throw new ArgumentNullException(nameof(user));
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
             cancellationToken.ThrowIfCancellationRequested();
 
             return Task.FromResult(user.UserName);
         }
 
-        public async Task<IList<ShopUser>> GetUsersForClaimAsync(Claim claim, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<IList<ShopUser>> GetUsersForClaimAsync(
+            Claim claim,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (claim == null) throw new ArgumentNullException(nameof(claim));
+            if (claim == null)
+            {
+                throw new ArgumentNullException(nameof(claim));
+            }
+
             cancellationToken.ThrowIfCancellationRequested();
 
             var query = _context.Users.Join(
@@ -353,9 +573,15 @@ namespace nikstra.CoreShopping.Service.Data
             return await query.ToListAsync(cancellationToken);
         }
 
-        public async Task<IList<ShopUser>> GetUsersInRoleAsync(string roleName, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<IList<ShopUser>> GetUsersInRoleAsync(
+            string roleName,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (string.IsNullOrWhiteSpace(roleName)) throw new ArgumentException($"{nameof(roleName)} cannot be null or empty.");
+            if (string.IsNullOrWhiteSpace(roleName))
+            {
+                throw new ArgumentException($"{nameof(roleName)} cannot be null or empty.");
+            }
+
             cancellationToken.ThrowIfCancellationRequested();
 
             var role = await _context.Roles.SingleOrDefaultAsync(r => r.Name == roleName, cancellationToken);
@@ -373,17 +599,29 @@ namespace nikstra.CoreShopping.Service.Data
             return new List<ShopUser>();
         }
 
-        public Task<bool> HasPasswordAsync(ShopUser user, CancellationToken cancellationToken = default(CancellationToken))
+        public Task<bool> HasPasswordAsync(
+            ShopUser user,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (user == null) throw new ArgumentNullException(nameof(user));
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
             cancellationToken.ThrowIfCancellationRequested();
 
             return Task.FromResult(string.IsNullOrEmpty(user.PasswordHash) == false);
         }
 
-        public Task<int> IncrementAccessFailedCountAsync(ShopUser user, CancellationToken cancellationToken = default(CancellationToken))
+        public Task<int> IncrementAccessFailedCountAsync(
+            ShopUser user,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (user == null) throw new ArgumentNullException(nameof(user));
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
             cancellationToken.ThrowIfCancellationRequested();
 
             user.AccessFailedCount++;
@@ -391,10 +629,21 @@ namespace nikstra.CoreShopping.Service.Data
             return Task.FromResult(user.AccessFailedCount);
         }
 
-        public async Task<bool> IsInRoleAsync(ShopUser user, string roleName, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<bool> IsInRoleAsync(
+            ShopUser user,
+            string roleName,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (user == null) throw new ArgumentNullException(nameof(user));
-            if (string.IsNullOrWhiteSpace(roleName)) throw new ArgumentException($"{nameof(roleName)} cannot be null or empty.");
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            if (string.IsNullOrWhiteSpace(roleName))
+            {
+                throw new ArgumentException($"{nameof(roleName)} cannot be null or empty.");
+            }
+
             cancellationToken.ThrowIfCancellationRequested();
 
             var role = await _context.Roles.SingleOrDefaultAsync(r => r.Name == roleName);
@@ -407,13 +656,25 @@ namespace nikstra.CoreShopping.Service.Data
             return false;
         }
 
-        public async Task<bool> RedeemCodeAsync(ShopUser user, string code, CancellationToken cancellationToken)
+        public async Task<bool> RedeemCodeAsync(
+            ShopUser user,
+            string code,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (user == null) throw new ArgumentNullException(nameof(user));
-            if (string.IsNullOrWhiteSpace(code)) throw new ArgumentException($"{nameof(code)} cannot be null or empty.");
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            if (string.IsNullOrWhiteSpace(code))
+            {
+                throw new ArgumentException($"{nameof(code)} cannot be null or empty.");
+            }
+
             cancellationToken.ThrowIfCancellationRequested();
 
-            var tokens = await GetTokenAsync(user, _internalLoginProvider, _recoveryCodeTokenName, cancellationToken);
+            var tokens = await GetTokenAsync(user, _internalLoginProvider,
+                _recoveryCodeTokenName, cancellationToken);
             var splitCodes = tokens.Split(";");
             if(splitCodes.Contains(code))
             {
@@ -427,10 +688,21 @@ namespace nikstra.CoreShopping.Service.Data
             return false;
         }
 
-        public async Task RemoveClaimsAsync(ShopUser user, IEnumerable<Claim> claims, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task RemoveClaimsAsync(
+            ShopUser user,
+            IEnumerable<Claim> claims,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (user == null) throw new ArgumentNullException(nameof(user));
-            if (claims == null) throw new ArgumentNullException(nameof(claims));
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            if (claims == null)
+            {
+                throw new ArgumentNullException(nameof(claims));
+            }
+
             cancellationToken.ThrowIfCancellationRequested();
 
             foreach(var claim in claims)
@@ -445,10 +717,21 @@ namespace nikstra.CoreShopping.Service.Data
             }
         }
 
-        public async Task RemoveFromRoleAsync(ShopUser user, string roleName, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task RemoveFromRoleAsync(
+            ShopUser user,
+            string roleName,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (user == null) throw new ArgumentNullException(nameof(user));
-            if (string.IsNullOrWhiteSpace(roleName)) throw new ArgumentException($"{nameof(roleName)} cannot be null or empty.");
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            if (string.IsNullOrWhiteSpace(roleName))
+            {
+                throw new ArgumentException($"{nameof(roleName)} cannot be null or empty.");
+            }
+
             cancellationToken.ThrowIfCancellationRequested();
 
             var role = await _context.Roles.SingleOrDefaultAsync(r => r.Name == roleName, cancellationToken);
@@ -462,11 +745,27 @@ namespace nikstra.CoreShopping.Service.Data
             }
         }
 
-        public async Task RemoveLoginAsync(ShopUser user, string loginProvider, string providerKey, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task RemoveLoginAsync(
+            ShopUser user,
+            string loginProvider,
+            string providerKey,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (user == null) throw new ArgumentNullException(nameof(user));
-            if (string.IsNullOrWhiteSpace(loginProvider)) throw new ArgumentException($"{nameof(loginProvider)} cannot be null or empty.");
-            if (string.IsNullOrWhiteSpace(providerKey)) throw new ArgumentException($"{nameof(providerKey)} cannot be null or empty.");
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            if (string.IsNullOrWhiteSpace(loginProvider))
+            {
+                throw new ArgumentException($"{nameof(loginProvider)} cannot be null or empty.");
+            }
+
+            if (string.IsNullOrWhiteSpace(providerKey))
+            {
+                throw new ArgumentException($"{nameof(providerKey)} cannot be null or empty.");
+            }
+
             cancellationToken.ThrowIfCancellationRequested();
 
             var login = await _context.UserLogins.SingleOrDefaultAsync(l =>
@@ -480,150 +779,307 @@ namespace nikstra.CoreShopping.Service.Data
             }
         }
 
-        public async Task RemoveTokenAsync(ShopUser user, string loginProvider, string name, CancellationToken cancellationToken)
+        public async Task RemoveTokenAsync(
+            ShopUser user,
+            string loginProvider,
+            string name,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (user == null) throw new ArgumentNullException(nameof(user));
-            if (string.IsNullOrWhiteSpace(loginProvider)) throw new ArgumentException($"{nameof(loginProvider)} cannot be null or empty.");
-            if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException($"{nameof(name)} cannot be null or empty.");
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            if (string.IsNullOrWhiteSpace(loginProvider))
+            {
+                throw new ArgumentException($"{nameof(loginProvider)} cannot be null or empty.");
+            }
+
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                throw new ArgumentException($"{nameof(name)} cannot be null or empty.");
+            }
+
             cancellationToken.ThrowIfCancellationRequested();
 
-            var entry = await FindTokenAsync(user, _internalLoginProvider, _authenticatorKeyTokenName, cancellationToken);
+            var entry = await FindTokenAsync(user, _internalLoginProvider,
+                _authenticatorKeyTokenName, cancellationToken);
             if(entry != null)
             {
                 _context.UserTokens.Remove(entry);
             }
         }
 
-        public async Task ReplaceClaimAsync(ShopUser user, Claim claim, Claim newClaim, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task ReplaceClaimAsync(
+            ShopUser user,
+            Claim claim,
+            Claim newClaim,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (user == null) throw new ArgumentNullException(nameof(user));
-            if (claim == null) throw new ArgumentNullException(nameof(claim));
-            if (newClaim == null) throw new ArgumentNullException(nameof(newClaim));
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            if (claim == null)
+            {
+                throw new ArgumentNullException(nameof(claim));
+            }
+
+            if (newClaim == null)
+            {
+                throw new ArgumentNullException(nameof(newClaim));
+            }
+
             cancellationToken.ThrowIfCancellationRequested();
 
             await AddClaimsAsync(user, new[] { newClaim }, cancellationToken);
             await RemoveClaimsAsync(user, new[] { claim }, cancellationToken);
         }
 
-        public Task ReplaceCodesAsync(ShopUser user, IEnumerable<string> recoveryCodes, CancellationToken cancellationToken)
+        public Task ReplaceCodesAsync(
+            ShopUser user,
+            IEnumerable<string> recoveryCodes,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
             var mergedCodes = string.Join(";", recoveryCodes);
-            return SetTokenAsync(user, _internalLoginProvider, _recoveryCodeTokenName, mergedCodes, cancellationToken);
+            return SetTokenAsync(user, _internalLoginProvider, _recoveryCodeTokenName,
+                mergedCodes, cancellationToken);
         }
 
-        public Task ResetAccessFailedCountAsync(ShopUser user, CancellationToken cancellationToken = default(CancellationToken))
+        public Task ResetAccessFailedCountAsync(
+            ShopUser user,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (user == null) throw new ArgumentNullException(nameof(user));
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
             cancellationToken.ThrowIfCancellationRequested();
 
             user.AccessFailedCount = 0;
             return Task.CompletedTask;
         }
 
-        public Task SetAuthenticatorKeyAsync(ShopUser user, string key, CancellationToken cancellationToken) =>
+        public Task SetAuthenticatorKeyAsync(
+            ShopUser user,
+            string key,
+            CancellationToken cancellationToken = default(CancellationToken)) =>
             SetTokenAsync(user, _internalLoginProvider, _authenticatorKeyTokenName, key, cancellationToken);
 
-        public Task SetEmailAsync(ShopUser user, string email, CancellationToken cancellationToken = default(CancellationToken))
+        public Task SetEmailAsync(
+            ShopUser user,
+            string email,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (user == null) throw new ArgumentNullException(nameof(user));
-            if (string.IsNullOrWhiteSpace(email)) throw new ArgumentException($"{nameof(email)} cannot be null or empty.");
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                throw new ArgumentException($"{nameof(email)} cannot be null or empty.");
+            }
+
             cancellationToken.ThrowIfCancellationRequested();
 
             user.Email = email;
             return Task.CompletedTask;
         }
 
-        public Task SetEmailConfirmedAsync(ShopUser user, bool confirmed, CancellationToken cancellationToken = default(CancellationToken))
+        public Task SetEmailConfirmedAsync(
+            ShopUser user,
+            bool confirmed,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (user == null) throw new ArgumentNullException(nameof(user));
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
             cancellationToken.ThrowIfCancellationRequested();
 
             user.EmailConfirmed = confirmed;
             return Task.CompletedTask;
         }
 
-        public Task SetLockoutEnabledAsync(ShopUser user, bool enabled, CancellationToken cancellationToken = default(CancellationToken))
+        public Task SetLockoutEnabledAsync(
+            ShopUser user,
+            bool enabled,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (user == null) throw new ArgumentNullException(nameof(user));
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
             cancellationToken.ThrowIfCancellationRequested();
 
             user.LockoutEnabled = enabled;
             return Task.CompletedTask;
         }
 
-        public Task SetLockoutEndDateAsync(ShopUser user, DateTimeOffset? lockoutEnd, CancellationToken cancellationToken = default(CancellationToken))
+        public Task SetLockoutEndDateAsync(
+            ShopUser user,
+            DateTimeOffset? lockoutEnd,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (user == null) throw new ArgumentNullException(nameof(user));
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
             cancellationToken.ThrowIfCancellationRequested();
 
             user.LockoutEnd = lockoutEnd;
             return Task.CompletedTask;
         }
 
-        public Task SetNormalizedEmailAsync(ShopUser user, string normalizedEmail, CancellationToken cancellationToken = default(CancellationToken))
+        public Task SetNormalizedEmailAsync(
+            ShopUser user,
+            string normalizedEmail,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (user == null) throw new ArgumentNullException(nameof(user));
-            if (string.IsNullOrWhiteSpace(normalizedEmail)) throw new ArgumentException($"{nameof(normalizedEmail)} cannot be null or empty.");
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            if (string.IsNullOrWhiteSpace(normalizedEmail))
+            {
+                throw new ArgumentException($"{nameof(normalizedEmail)} cannot be null or empty.");
+            }
+
             cancellationToken.ThrowIfCancellationRequested();
 
             user.NormalizedEmail = normalizedEmail;
             return Task.CompletedTask;
         }
 
-        public Task SetNormalizedUserNameAsync(ShopUser user, string normalizedName, CancellationToken cancellationToken = default(CancellationToken))
+        public Task SetNormalizedUserNameAsync(
+            ShopUser user,
+            string normalizedName,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (user == null) throw new ArgumentNullException(nameof(user));
-            if (string.IsNullOrWhiteSpace(normalizedName)) throw new ArgumentException($"{nameof(normalizedName)} cannot be null or empty.");
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            if (string.IsNullOrWhiteSpace(normalizedName))
+            {
+                throw new ArgumentException($"{nameof(normalizedName)} cannot be null or empty.");
+            }
+
             cancellationToken.ThrowIfCancellationRequested();
 
             user.NormalizedUserName = normalizedName;
             return Task.CompletedTask;
         }
 
-        public Task SetPasswordHashAsync(ShopUser user, string passwordHash, CancellationToken cancellationToken = default(CancellationToken))
+        public Task SetPasswordHashAsync(
+            ShopUser user,
+            string passwordHash,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (user == null) throw new ArgumentNullException(nameof(user));
-            if (string.IsNullOrWhiteSpace(passwordHash)) throw new ArgumentException($"{nameof(passwordHash)} cannot be null or empty.");
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            if (string.IsNullOrWhiteSpace(passwordHash))
+            {
+                throw new ArgumentException($"{nameof(passwordHash)} cannot be null or empty.");
+            }
+
             cancellationToken.ThrowIfCancellationRequested();
 
             user.PasswordHash = passwordHash;
             return Task.CompletedTask;
         }
 
-        public Task SetPhoneNumberAsync(ShopUser user, string phoneNumber, CancellationToken cancellationToken = default(CancellationToken))
+        public Task SetPhoneNumberAsync(
+            ShopUser user,
+            string phoneNumber,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (user == null) throw new ArgumentNullException(nameof(user));
-            if (string.IsNullOrWhiteSpace(phoneNumber)) throw new ArgumentException($"{nameof(phoneNumber)} cannot be null or empty.");
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            if (string.IsNullOrWhiteSpace(phoneNumber))
+            {
+                throw new ArgumentException($"{nameof(phoneNumber)} cannot be null or empty.");
+            }
+
             cancellationToken.ThrowIfCancellationRequested();
 
             user.PhoneNumber = phoneNumber;
             return Task.CompletedTask;
         }
 
-        public Task SetPhoneNumberConfirmedAsync(ShopUser user, bool confirmed, CancellationToken cancellationToken = default(CancellationToken))
+        public Task SetPhoneNumberConfirmedAsync(
+            ShopUser user,
+            bool confirmed,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (user == null) throw new ArgumentNullException(nameof(user));
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
             cancellationToken.ThrowIfCancellationRequested();
 
             user.PhoneNumberConfirmed = confirmed;
             return Task.CompletedTask;
         }
 
-        public Task SetSecurityStampAsync(ShopUser user, string stamp, CancellationToken cancellationToken = default(CancellationToken))
+        public Task SetSecurityStampAsync(
+            ShopUser user,
+            string stamp,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (user == null) throw new ArgumentNullException(nameof(user));
-            if (string.IsNullOrWhiteSpace(stamp)) throw new ArgumentException($"{nameof(stamp)} cannot be null or empty.");
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            if (string.IsNullOrWhiteSpace(stamp))
+            {
+                throw new ArgumentException($"{nameof(stamp)} cannot be null or empty.");
+            }
+
             cancellationToken.ThrowIfCancellationRequested();
 
             user.SecurityStamp = stamp;
             return Task.CompletedTask;
         }
 
-        public async Task SetTokenAsync(ShopUser user, string loginProvider, string name, string value, CancellationToken cancellationToken)
+        public async Task SetTokenAsync(
+            ShopUser user,
+            string loginProvider,
+            string name,
+            string value,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (user == null) throw new ArgumentNullException(nameof(user));
-            if (string.IsNullOrWhiteSpace(loginProvider)) throw new ArgumentException($"{nameof(loginProvider)} cannot be null or empty.");
-            if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException($"{nameof(name)} cannot be null or empty.");
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            if (string.IsNullOrWhiteSpace(loginProvider))
+            {
+                throw new ArgumentException($"{nameof(loginProvider)} cannot be null or empty.");
+            }
+
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                throw new ArgumentException($"{nameof(name)} cannot be null or empty.");
+            }
+
             cancellationToken.ThrowIfCancellationRequested();
 
             var entry = await FindTokenAsync(user, loginProvider, name, cancellationToken);
@@ -643,28 +1099,52 @@ namespace nikstra.CoreShopping.Service.Data
             }
         }
 
-        public Task SetTwoFactorEnabledAsync(ShopUser user, bool enabled, CancellationToken cancellationToken = default(CancellationToken))
+        public Task SetTwoFactorEnabledAsync(
+            ShopUser user,
+            bool enabled,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (user == null) throw new ArgumentNullException(nameof(user));
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
             cancellationToken.ThrowIfCancellationRequested();
 
             user.TwoFactorEnabled = enabled;
             return Task.CompletedTask;
         }
 
-        public Task SetUserNameAsync(ShopUser user, string userName, CancellationToken cancellationToken = default(CancellationToken))
+        public Task SetUserNameAsync(
+            ShopUser user,
+            string userName,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (user == null) throw new ArgumentNullException(nameof(user));
-            if (string.IsNullOrWhiteSpace(userName)) throw new ArgumentException($"{nameof(userName)} cannot be null or empty.");
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            if (string.IsNullOrWhiteSpace(userName))
+            {
+                throw new ArgumentException($"{nameof(userName)} cannot be null or empty.");
+            }
+
             cancellationToken.ThrowIfCancellationRequested();
 
             user.UserName = userName;
             return Task.CompletedTask;
         }
 
-        public async Task<IdentityResult> UpdateAsync(ShopUser user, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<IdentityResult> UpdateAsync(
+            ShopUser user,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (user == null) throw new ArgumentNullException(nameof(user));
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
             cancellationToken.ThrowIfCancellationRequested();
 
             _context.Attach(user);
