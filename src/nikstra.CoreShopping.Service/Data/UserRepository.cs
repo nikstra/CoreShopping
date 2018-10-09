@@ -43,7 +43,7 @@ namespace nikstra.CoreShopping.Service.Data
             ShopUser user,
             string providerName,
             string tokenName,
-            CancellationToken cancellationToken) =>
+            CancellationToken cancellationToken = default(CancellationToken)) =>
             _context.UserTokens.FindAsync(new object[] { providerName, tokenName, user.Id }, cancellationToken);
 
         public UserRepository(UserDbContext context)
@@ -285,7 +285,7 @@ namespace nikstra.CoreShopping.Service.Data
 
         public Task<string> GetAuthenticatorKeyAsync(
             ShopUser user,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken = default(CancellationToken))
         {
             if (user == null)
             {
