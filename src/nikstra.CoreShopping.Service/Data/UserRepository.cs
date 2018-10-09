@@ -15,9 +15,6 @@ using System.Threading.Tasks;
 // http://danderson.io/posts/using-your-own-database-schema-and-classes-with-asp-net-core-identity-and-entity-framework-core/
 // http://www.elemarjr.com/en/2017/05/writing-an-asp-net-core-identity-storage-provider-from-scratch-with-ravendb/
 
-// TODO: Implement IUserAuthenticationTokenStore<ShopUser> and/or IUserAuthenticatorKeyStore<ShopUser>.
-// If two-factor auth should be used or remove two-factor links in razor pages.
-
 namespace nikstra.CoreShopping.Service.Data
 {
     public class UserRepository :
@@ -31,9 +28,19 @@ namespace nikstra.CoreShopping.Service.Data
         IUserPhoneNumberStore<ShopUser>,
         IUserEmailStore<ShopUser>,
         IUserLockoutStore<ShopUser>,
-        IQueryableUserStore<ShopUser>
+        IQueryableUserStore<ShopUser>,
+        IUserAuthenticatorKeyStore<ShopUser>,
+        IUserTwoFactorRecoveryCodeStore<ShopUser>,
+        IUserAuthenticationTokenStore<ShopUser>
     {
+        private const string _internalLoginProvider = "[nikstraUserRepository]";
+        private const string _authenticatorKeyTokenName = "AuthenticatorKey";
+        private const string _recoveryCodeTokenName = "RecoveryCodes";
+
         private UserDbContext _context;
+
+        private Task<ShopUserToken> FindTokenAsync(ShopUser user, string providerName, string tokenName, CancellationToken cancellationToken) =>
+            _context.UserTokens.FindAsync(new object[] { providerName, tokenName, user.Id }, cancellationToken);
 
         public UserRepository(UserDbContext context)
         {
@@ -85,6 +92,15 @@ namespace nikstra.CoreShopping.Service.Data
             };
 
             user.Roles.Add(userRole);
+        }
+
+        public async Task<int> CountCodesAsync(ShopUser user, CancellationToken cancellationToken)
+        {
+            if (user == null) throw new ArgumentNullException(nameof(user));
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var tokens = await GetTokenAsync(user, _internalLoginProvider, _recoveryCodeTokenName, cancellationToken) ?? string.Empty;
+            return tokens.Length > 0 ? tokens.Split(";").Length : 0;
         }
 
         public async Task<IdentityResult> CreateAsync(ShopUser user, CancellationToken cancellationToken = default(CancellationToken))
@@ -171,6 +187,14 @@ namespace nikstra.CoreShopping.Service.Data
             cancellationToken.ThrowIfCancellationRequested();
 
             return Task.FromResult(user.AccessFailedCount);
+        }
+
+        public Task<string> GetAuthenticatorKeyAsync(ShopUser user, CancellationToken cancellationToken)
+        {
+            if (user == null) throw new ArgumentNullException(nameof(user));
+            cancellationToken.ThrowIfCancellationRequested();
+
+            return GetTokenAsync(user, _internalLoginProvider, _authenticatorKeyTokenName, cancellationToken);
         }
 
         public Task<IList<Claim>> GetClaimsAsync(ShopUser user, CancellationToken cancellationToken = default(CancellationToken))
@@ -280,6 +304,17 @@ namespace nikstra.CoreShopping.Service.Data
             return Task.FromResult(user.SecurityStamp);
         }
 
+        public async Task<string> GetTokenAsync(ShopUser user, string loginProvider, string name, CancellationToken cancellationToken)
+        {
+            if (user == null) throw new ArgumentNullException(nameof(user));
+            if (string.IsNullOrWhiteSpace(loginProvider)) throw new ArgumentException($"{nameof(loginProvider)} cannot be null or empty.");
+            if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException($"{nameof(name)} cannot be null or empty.");
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var entry = await FindTokenAsync(user, _internalLoginProvider, _authenticatorKeyTokenName, cancellationToken);
+            return entry?.Value;
+        }
+
         public Task<bool> GetTwoFactorEnabledAsync(ShopUser user, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (user == null) throw new ArgumentNullException(nameof(user));
@@ -372,6 +407,26 @@ namespace nikstra.CoreShopping.Service.Data
             return false;
         }
 
+        public async Task<bool> RedeemCodeAsync(ShopUser user, string code, CancellationToken cancellationToken)
+        {
+            if (user == null) throw new ArgumentNullException(nameof(user));
+            if (string.IsNullOrWhiteSpace(code)) throw new ArgumentException($"{nameof(code)} cannot be null or empty.");
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var tokens = await GetTokenAsync(user, _internalLoginProvider, _recoveryCodeTokenName, cancellationToken);
+            var splitCodes = tokens.Split(";");
+            if(splitCodes.Contains(code))
+            {
+                // TODO: Why use a new List here? [Niklas, 2018-10-09]
+                var updatedCodes = new List<string>(splitCodes.Where(c => c != code));
+                await ReplaceCodesAsync(user, updatedCodes, cancellationToken);
+
+                return true;
+            }
+
+            return false;
+        }
+
         public async Task RemoveClaimsAsync(ShopUser user, IEnumerable<Claim> claims, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (user == null) throw new ArgumentNullException(nameof(user));
@@ -425,6 +480,20 @@ namespace nikstra.CoreShopping.Service.Data
             }
         }
 
+        public async Task RemoveTokenAsync(ShopUser user, string loginProvider, string name, CancellationToken cancellationToken)
+        {
+            if (user == null) throw new ArgumentNullException(nameof(user));
+            if (string.IsNullOrWhiteSpace(loginProvider)) throw new ArgumentException($"{nameof(loginProvider)} cannot be null or empty.");
+            if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException($"{nameof(name)} cannot be null or empty.");
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var entry = await FindTokenAsync(user, _internalLoginProvider, _authenticatorKeyTokenName, cancellationToken);
+            if(entry != null)
+            {
+                _context.UserTokens.Remove(entry);
+            }
+        }
+
         public async Task ReplaceClaimAsync(ShopUser user, Claim claim, Claim newClaim, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (user == null) throw new ArgumentNullException(nameof(user));
@@ -436,6 +505,12 @@ namespace nikstra.CoreShopping.Service.Data
             await RemoveClaimsAsync(user, new[] { claim }, cancellationToken);
         }
 
+        public Task ReplaceCodesAsync(ShopUser user, IEnumerable<string> recoveryCodes, CancellationToken cancellationToken)
+        {
+            var mergedCodes = string.Join(";", recoveryCodes);
+            return SetTokenAsync(user, _internalLoginProvider, _recoveryCodeTokenName, mergedCodes, cancellationToken);
+        }
+
         public Task ResetAccessFailedCountAsync(ShopUser user, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (user == null) throw new ArgumentNullException(nameof(user));
@@ -444,6 +519,9 @@ namespace nikstra.CoreShopping.Service.Data
             user.AccessFailedCount = 0;
             return Task.CompletedTask;
         }
+
+        public Task SetAuthenticatorKeyAsync(ShopUser user, string key, CancellationToken cancellationToken) =>
+            SetTokenAsync(user, _internalLoginProvider, _authenticatorKeyTokenName, key, cancellationToken);
 
         public Task SetEmailAsync(ShopUser user, string email, CancellationToken cancellationToken = default(CancellationToken))
         {
@@ -539,6 +617,30 @@ namespace nikstra.CoreShopping.Service.Data
 
             user.SecurityStamp = stamp;
             return Task.CompletedTask;
+        }
+
+        public async Task SetTokenAsync(ShopUser user, string loginProvider, string name, string value, CancellationToken cancellationToken)
+        {
+            if (user == null) throw new ArgumentNullException(nameof(user));
+            if (string.IsNullOrWhiteSpace(loginProvider)) throw new ArgumentException($"{nameof(loginProvider)} cannot be null or empty.");
+            if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException($"{nameof(name)} cannot be null or empty.");
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var entry = await FindTokenAsync(user, loginProvider, name, cancellationToken);
+            if (entry == null)
+            {
+                _context.UserTokens.Add(new ShopUserToken
+                {
+                    UserId = user.Id,
+                    LoginProvider = loginProvider,
+                    Name = name,
+                    Value = value
+                });
+            }
+            else
+            {
+                entry.Value = value;
+            }
         }
 
         public Task SetTwoFactorEnabledAsync(ShopUser user, bool enabled, CancellationToken cancellationToken = default(CancellationToken))
