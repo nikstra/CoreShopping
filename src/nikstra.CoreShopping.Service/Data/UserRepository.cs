@@ -250,7 +250,7 @@ namespace nikstra.CoreShopping.Service.Data
 
             if (userLogin != null)
             {
-                return await _context.Users.FindAsync(userLogin.UserId, cancellationToken);
+                return await _context.Users.FindAsync(new[] { userLogin.UserId }, cancellationToken);
             }
 
             return null;
