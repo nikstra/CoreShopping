@@ -508,8 +508,7 @@ namespace nikstra.CoreShopping.Service.Data
 
             cancellationToken.ThrowIfCancellationRequested();
 
-            var entry = await FindTokenAsync(user, _internalLoginProvider,
-                _authenticatorKeyTokenName, cancellationToken);
+            var entry = await FindTokenAsync(user, loginProvider, name, cancellationToken);
             return entry?.Value;
         }
 
@@ -804,8 +803,7 @@ namespace nikstra.CoreShopping.Service.Data
 
             cancellationToken.ThrowIfCancellationRequested();
 
-            var entry = await FindTokenAsync(user, _internalLoginProvider,
-                _authenticatorKeyTokenName, cancellationToken);
+            var entry = await FindTokenAsync(user, loginProvider, name, cancellationToken);
             if(entry != null)
             {
                 _context.UserTokens.Remove(entry);
