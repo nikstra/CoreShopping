@@ -76,7 +76,7 @@ namespace nikstra.CoreShopping.Service.Data
             return Task.CompletedTask;
         }
 
-        public async Task AddLoginAsync(
+        public Task AddLoginAsync(
             ShopUser user,
             UserLoginInfo login,
             CancellationToken cancellationToken = default(CancellationToken))
@@ -93,13 +93,15 @@ namespace nikstra.CoreShopping.Service.Data
 
             cancellationToken.ThrowIfCancellationRequested();
 
-            await _context.UserLogins.AddAsync(new ShopUserLogin
+            _context.UserLogins.Add(new ShopUserLogin
             {
                 LoginProvider = login.LoginProvider,
                 ProviderDisplayName = login.ProviderDisplayName,
                 ProviderKey = login.ProviderKey,
                 UserId = user.Id
-            }, cancellationToken);
+            });
+
+            return Task.CompletedTask;
         }
 
         public async Task AddToRoleAsync(
