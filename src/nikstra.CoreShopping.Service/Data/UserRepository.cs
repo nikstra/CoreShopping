@@ -33,9 +33,9 @@ namespace nikstra.CoreShopping.Service.Data
         IUserTwoFactorRecoveryCodeStore<ShopUser>,
         IUserTwoFactorStore<ShopUser>
     {
-        private const string _internalLoginProvider = "[nikstraUserRepository]";
-        private const string _authenticatorKeyTokenName = "AuthenticatorKey";
-        private const string _recoveryCodeTokenName = "RecoveryCodes";
+        protected const string _internalLoginProvider = "[nikstraUserRepository]";
+        protected const string _authenticatorKeyTokenName = "AuthenticatorKey";
+        protected const string _recoveryCodeTokenName = "RecoveryCodes";
 
         private UserDbContext _context;
 
