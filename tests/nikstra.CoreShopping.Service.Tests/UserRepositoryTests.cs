@@ -19,6 +19,33 @@ namespace nikstra.CoreShopping.Service.Tests
     [TestFixture, SetCulture("en-US")]
     public class UserRepositoryTests
     {
+        private Dictionary<Type, Func<DbContextOptions<UserDbContext>, DbContext>> _typeMap =
+            new Dictionary<Type, Func<DbContextOptions<UserDbContext>, DbContext>>
+        {
+            { typeof(UserDbContext), options => new UserDbContext(options) },
+            { typeof(SeededUserDbContext), options => new SeededUserDbContext(options) }
+        };
+
+        private T CreateContext<T>(string databaseName, bool dropDb = false)
+            where T : DbContext
+        {
+            var options = new DbContextOptionsBuilder<UserDbContext>()
+                .UseInMemoryDatabase(databaseName: databaseName)
+                .Options;
+
+            var context = _typeMap.ContainsKey(typeof(T))
+                ? _typeMap[typeof(T)](options) as T
+                : throw new ApplicationException($"Cannot create instance of {typeof(T).Name}");
+
+            if(dropDb)
+            {
+                context.Database.EnsureDeleted();
+                context.Database.EnsureCreated();
+            }
+
+            return context;
+        }
+
         private class UserRepositoryAccessor : UserRepository
         {
             private UserRepositoryAccessor()
@@ -34,29 +61,14 @@ namespace nikstra.CoreShopping.Service.Tests
         string RecoveryCodeTokenName = UserRepositoryAccessor.RecoveryCodeTokenName;
         ILookupNormalizer _normalizer = new UpperInvariantLookupNormalizer();
 
-        private UserDbContext GetInMemoryContext(string databaseName)
-        {
-            var options = new DbContextOptionsBuilder<UserDbContext>()
-                .UseInMemoryDatabase(databaseName: databaseName)
-                .Options;
-
-            var context = new UserDbContext(options);
-            // Don't call EensureDeleted() here since we are calling GetInMemoryContext() to perform Asserts.
-            //context.Database.EnsureDeleted();
-            context.Database.EnsureCreated();
-            return context;
-        }
-
         #region AddClaimsAsync tests
         [Test]
         public async Task AddClaimsAsync_AddsClaims_WhenCalled()
         {
             // Arrange
             var dbName = nameof(AddClaimsAsync_AddsClaims_WhenCalled);
-            var context = GetInMemoryContext(dbName);
-            var user = new ShopUser { UserName = "user@domain.tld" };
-            context.Users.Add(user); // TODO: Create a seed method instead of this. [Niklas, 2018-10-11]
-            context.SaveChanges();
+            var context = CreateContext<SeededUserDbContext>(dbName, true);
+            var user = context.Users.First();
             var claims = new List<Claim>
             {
                 new Claim("type", "value"),
@@ -71,7 +83,7 @@ namespace nikstra.CoreShopping.Service.Tests
             }
 
             // Assert
-            using (var resultContext = GetInMemoryContext(dbName))
+            using (var resultContext = CreateContext<SeededUserDbContext>(dbName))
             {
                 var result = await resultContext.UserClaims.ToListAsync();
                 Assert.That(result.Count, Is.EqualTo(2));
@@ -154,10 +166,8 @@ namespace nikstra.CoreShopping.Service.Tests
         {
             // Arrange
             var dbName = nameof(AddLoginAsync_AddsLogin_WhenCalled);
-            var context = GetInMemoryContext(dbName);
-            var user = new ShopUser { UserName = "user@domain.tld" };
-            context.Users.Add(user); // TODO: Create a seed method instead of this. [Niklas, 2018-10-11]
-            context.SaveChanges();
+            var context = CreateContext<SeededUserDbContext>(dbName, true);
+            var user = context.Users.First();
             var loginInfo = new UserLoginInfo("provider", "key", "name");
 
             // Act
@@ -168,7 +178,7 @@ namespace nikstra.CoreShopping.Service.Tests
             }
 
             // Assert
-            using (var resultContext = GetInMemoryContext(dbName))
+            using (var resultContext = CreateContext<SeededUserDbContext>(dbName))
             {
                 var result = await resultContext.UserLogins.SingleOrDefaultAsync();
                 Assert.That(result?.LoginProvider, Is.EqualTo(loginInfo.LoginProvider));
@@ -251,12 +261,9 @@ namespace nikstra.CoreShopping.Service.Tests
         {
             // Arrange
             var dbName = nameof(AddToRoleAsync_AddsUserToRole_WhenCalled);
-            var context = GetInMemoryContext(dbName);
-            var user = new ShopUser { UserName = "user@domain.tld" };
-            context.Users.Add(user); // TODO: Create a seed method instead of this. [Niklas, 2018-10-11]
-            var role = new ShopRole { Name = "roleName" };
-            context.Roles.Add(role);
-            context.SaveChanges();
+            var context = CreateContext<SeededUserDbContext>(dbName, true);
+            var user = context.Users.First();
+            var role = context.Roles.First();
 
             // Act
             using (var repository = new UserRepository(context))
@@ -266,9 +273,9 @@ namespace nikstra.CoreShopping.Service.Tests
             }
 
             // Assert
-            using (var resultContext = GetInMemoryContext(dbName))
+            using (var resultContext = CreateContext<SeededUserDbContext>(dbName))
             {
-                var resultUser = resultContext.Users.SingleOrDefault();
+                var resultUser = resultContext.Users.Find(user.Id);
                 var resultRole = resultContext.UserRoles
                     .Include(ur => ur.ShopRole)
                     .Where(ur => ur.UserId == resultUser.Id)
@@ -284,10 +291,8 @@ namespace nikstra.CoreShopping.Service.Tests
         {
             // Arrange
             var dbName = nameof(AddToRoleAsync_ThrowsInvalidOperationException_WhenRoleDoesNotExist);
-            var context = GetInMemoryContext(dbName);
-            var user = new ShopUser { UserName = "user@domain.tld" };
-            context.Users.Add(user); // TODO: Create a seed method instead of this. [Niklas, 2018-10-11]
-            context.SaveChanges();
+            var context = CreateContext<SeededUserDbContext>(dbName, true);
+            var user = context.Users.First();
 
             // Act
             Task Act()
@@ -378,9 +383,8 @@ namespace nikstra.CoreShopping.Service.Tests
         {
             // Arrange
             var dbName = nameof(CountCodesAsync_ReturnsNumberOfAvailableCodes_WhenCalled);
-            var context = GetInMemoryContext(dbName);
-            var user = new ShopUser { UserName = "user@domain.tld" };
-            context.Users.Add(user); // TODO: Create a seed method instead of this. [Niklas, 2018-10-11]
+            var context = CreateContext<SeededUserDbContext>(dbName, true);
+            var user = context.Users.First();
             var userToken = new ShopUserToken
             {
                 UserId = user.Id,
@@ -450,7 +454,7 @@ namespace nikstra.CoreShopping.Service.Tests
         {
             // Arrange
             var dbName = nameof(CountCodesAsync_ReturnsNumberOfAvailableCodes_WhenCalled);
-            var context = GetInMemoryContext(dbName);
+            var context = CreateContext<UserDbContext>(dbName, true);
             var user = new ShopUser { UserName = "user@domain.tld" };
 
             // Act
@@ -461,7 +465,7 @@ namespace nikstra.CoreShopping.Service.Tests
             }
 
             // Assert
-            using (var resultContext = GetInMemoryContext(dbName))
+            using (var resultContext = CreateContext<UserDbContext>(dbName))
             {
                 Assert.That(result, Is.EqualTo(IdentityResult.Success));
                 var resultUser = resultContext.Users.Find(user.Id);
@@ -519,10 +523,8 @@ namespace nikstra.CoreShopping.Service.Tests
         {
             // Arrange
             var dbName = nameof(DeleteAsync_RemovesUser_WhenCalled);
-            var context = GetInMemoryContext(dbName);
-            var user = new ShopUser { UserName = "user@domain.tld" };
-            context.Users.Add(user); // TODO: Create a seed method instead of this. [Niklas, 2018-10-11]
-            context.SaveChanges();
+            var context = CreateContext<SeededUserDbContext>(dbName, true);
+            var user = context.Users.First();
 
             // Act
             IdentityResult result;
@@ -532,11 +534,11 @@ namespace nikstra.CoreShopping.Service.Tests
             }
 
             // Assert
-            using (var resultContext = GetInMemoryContext(dbName))
+            using (var resultContext = CreateContext<SeededUserDbContext>(dbName))
             {
 
                 Assert.That(result, Is.EqualTo(IdentityResult.Success));
-                var resultUser = resultContext.Users.SingleOrDefault();
+                var resultUser = resultContext.Users.Find(user.Id);
                 Assert.That(resultUser, Is.Null);
             }
         }
@@ -613,15 +615,10 @@ namespace nikstra.CoreShopping.Service.Tests
         {
             // Arrange
             var dbName = nameof(FindByEmailAsync_ReturnsAShopUser_WhenAUserIsFound);
-            var context = GetInMemoryContext(dbName);
-            var normalizedEmail = _normalizer.Normalize("user@domain.tld");
-            var user = new ShopUser
-            {
-                UserName = "user@domain.tld",
-                NormalizedEmail = normalizedEmail
-            };
-            context.Users.Add(user); // TODO: Create a seed method instead of this. [Niklas, 2018-10-11]
-            context.SaveChanges();
+            var context = CreateContext<SeededUserDbContext>(dbName, true);
+            var user = context.Users.First();
+            var normalizedEmail = _normalizer.Normalize(user.Email);
+            user.NormalizedEmail = normalizedEmail;
 
             // Act
             ShopUser result;
@@ -639,14 +636,10 @@ namespace nikstra.CoreShopping.Service.Tests
         {
             // Arrange
             var dbName = nameof(FindByEmailAsync_ReturnsNull_WhenAUserIsNotFound);
-            var context = GetInMemoryContext(dbName);
-            var normalizedEmail = _normalizer.Normalize("user@domain.tld");
-            var user = new ShopUser
-            {
-                UserName = "user@domain.tld",
-                NormalizedEmail = normalizedEmail
-            };
-            context.Users.Add(user); // TODO: Create a seed method instead of this. [Niklas, 2018-10-11]
+            var context = CreateContext<SeededUserDbContext>(dbName, true);
+            var user = context.Users.First();
+            var normalizedEmail = _normalizer.Normalize(user.Email);
+            user.NormalizedEmail = normalizedEmail;
             context.SaveChanges();
 
             // Act
@@ -709,10 +702,8 @@ namespace nikstra.CoreShopping.Service.Tests
         {
             // Arrange
             var dbName = nameof(FindByIdAsync_ReturnsAShopUser_WhenAUserIsFound);
-            var context = GetInMemoryContext(dbName);
-            var user = new ShopUser { UserName = "user@domain.tld" };
-            context.Users.Add(user); // TODO: Create a seed method instead of this. [Niklas, 2018-10-11]
-            context.SaveChanges();
+            var context = CreateContext<SeededUserDbContext>(dbName, true);
+            var user = context.Users.First();
 
             // Act
             ShopUser result;
@@ -730,10 +721,8 @@ namespace nikstra.CoreShopping.Service.Tests
         {
             // Arrange
             var dbName = nameof(FindByIdAsync_ReturnsNull_WhenAUserIsNotFound);
-            var context = GetInMemoryContext(dbName);
-            var user = new ShopUser { UserName = "user@domain.tld" };
-            context.Users.Add(user); // TODO: Create a seed method instead of this. [Niklas, 2018-10-11]
-            context.SaveChanges();
+            var context = CreateContext<SeededUserDbContext>(dbName, true);
+            var user = context.Users.First();
 
             // Act
             ShopUser result;
@@ -795,9 +784,8 @@ namespace nikstra.CoreShopping.Service.Tests
         {
             // Arrange
             var dbName = nameof(FindByLoginAsync_ReturnsAShopUser_WhenAUserIsFound);
-            var context = GetInMemoryContext(dbName);
-            var user = new ShopUser { UserName = "user@domain.tld" };
-            context.Users.Add(user); // TODO: Create a seed method instead of this. [Niklas, 2018-10-11]
+            var context = CreateContext<SeededUserDbContext>(dbName, true);
+            var user = context.Users.First();
             context.UserLogins.Add(new ShopUserLogin
             {
                 UserId = user.Id,
@@ -823,10 +811,8 @@ namespace nikstra.CoreShopping.Service.Tests
         {
             // Arrange
             var dbName = nameof(FindByLoginAsync_ReturnsNull_WhenAUserIsNotFound);
-            var context = GetInMemoryContext(dbName);
-            var user = new ShopUser { UserName = "user@domain.tld" };
-            context.Users.Add(user); // TODO: Create a seed method instead of this. [Niklas, 2018-10-11]
-            context.SaveChanges();
+            var context = CreateContext<SeededUserDbContext>(dbName, true);
+            var user = context.Users.First();
 
             // Act
             ShopUser result;
@@ -910,14 +896,10 @@ namespace nikstra.CoreShopping.Service.Tests
         {
             // Arrange
             var dbName = nameof(FindByNameAsync_ReturnsAShopUser_WhenAUserIsFound);
-            var context = GetInMemoryContext(dbName);
-            var normalizedUserName = _normalizer.Normalize("user@domain.tld");
-            var user = new ShopUser
-            {
-                UserName = "user@domain.tld",
-                NormalizedUserName = normalizedUserName
-            };
-            context.Users.Add(user); // TODO: Create a seed method instead of this. [Niklas, 2018-10-11]
+            var context = CreateContext<SeededUserDbContext>(dbName, true);
+            var user = context.Users.First();
+            var normalizedUserName = _normalizer.Normalize(user.UserName);
+            user.NormalizedUserName = normalizedUserName;
             context.SaveChanges();
 
             // Act
@@ -936,14 +918,10 @@ namespace nikstra.CoreShopping.Service.Tests
         {
             // Arrange
             var dbName = nameof(FindByNameAsync_ReturnsNull_WhenAUserIsNotFound);
-            var context = GetInMemoryContext(dbName);
-            var normalizedUserName = _normalizer.Normalize("user@domain.tld");
-            var user = new ShopUser
-            {
-                UserName = "user@domain.tld",
-                NormalizedUserName = normalizedUserName
-            };
-            context.Users.Add(user); // TODO: Create a seed method instead of this. [Niklas, 2018-10-11]
+            var context = CreateContext<SeededUserDbContext>(dbName, true);
+            var user = context.Users.First();
+            var normalizedUserName = _normalizer.Normalize(user.UserName);
+            user.NormalizedUserName = normalizedUserName;
             context.SaveChanges();
 
             // Act
@@ -1067,9 +1045,8 @@ namespace nikstra.CoreShopping.Service.Tests
         {
             // Arrange
             var dbName = nameof(GetAuthenticatorKeyAsync_ReturnsKey_WhenAKeyIsFound);
-            var context = GetInMemoryContext(dbName);
-            var user = new ShopUser { UserName = "user@domain.tld" };
-            context.Users.Add(user); // TODO: Create a seed method instead of this. [Niklas, 2018-10-11]
+            var context = CreateContext<SeededUserDbContext>(dbName, true);
+            var user = context.Users.First();
             var userLogin = new ShopUserToken
             {
                 UserId = user.Id,
@@ -1096,10 +1073,8 @@ namespace nikstra.CoreShopping.Service.Tests
         {
             // Arrange
             var dbName = nameof(GetAuthenticatorKeyAsync_ReturnsNull_WhenAKeyIsNotFound);
-            var context = GetInMemoryContext(dbName);
-            var user = new ShopUser { UserName = "user@domain.tld" };
-            context.Users.Add(user); // TODO: Create a seed method instead of this. [Niklas, 2018-10-11]
-            context.SaveChanges();
+            var context = CreateContext<SeededUserDbContext>(dbName, true);
+            var user = context.Users.First();
 
             // Act
             string result;
@@ -1476,9 +1451,8 @@ namespace nikstra.CoreShopping.Service.Tests
         {
             // Arrange
             var dbName = nameof(GetLoginsAsync_ReturnsLogins_WhenLoginsAreFound);
-            var context = GetInMemoryContext(dbName);
-            var user = new ShopUser { UserName = "user@domain.tld" };
-            context.Users.Add(user); // TODO: Create a seed method instead of this. [Niklas, 2018-10-11]
+            var context = CreateContext<SeededUserDbContext>(dbName, true);
+            var user = context.Users.First();
             context.UserLogins.Add(new ShopUserLogin
             {
                 UserId = user.Id,
@@ -1984,9 +1958,8 @@ namespace nikstra.CoreShopping.Service.Tests
         {
             // Arrange
             var dbName = nameof(GetTokenAsync_ReturnsAToken_WhenCalled);
-            var context = GetInMemoryContext(dbName);
-            var user = new ShopUser { UserName = "user@domain.tld" };
-            context.Users.Add(user); // TODO: Create a seed method instead of this. [Niklas, 2018-10-11]
+            var context = CreateContext<SeededUserDbContext>(dbName, true);
+            var user = context.Users.First();
             context.UserTokens.Add(new ShopUserToken
             {
                 UserId = user.Id,
@@ -2012,10 +1985,8 @@ namespace nikstra.CoreShopping.Service.Tests
         {
             // Arrange
             var dbName = nameof(GetTokenAsync_ReturnsAToken_WhenCalled);
-            var context = GetInMemoryContext(dbName);
-            var user = new ShopUser { UserName = "user@domain.tld" };
-            context.Users.Add(user); // TODO: Create a seed method instead of this. [Niklas, 2018-10-11]
-            context.SaveChanges();
+            var context = CreateContext<SeededUserDbContext>(dbName, true);
+            var user = context.Users.First();
 
             // Act
             string result;
@@ -2305,11 +2276,9 @@ namespace nikstra.CoreShopping.Service.Tests
         {
             // Arrange
             var dbName = nameof(GetUsersForClaimAsync_ReturnsUsers_WhenCalled);
-            var context = GetInMemoryContext(dbName);
-            var user = new ShopUser { UserName = "user@domain.tld" };
-            context.Users.Add(user);
-            var user2 = new ShopUser { UserName = "user2@domain.tld" };
-            context.Users.Add(user2);
+            var context = CreateContext<SeededUserDbContext>(dbName, true);
+            var user = context.Users.First();
+            var user2 = context.Users.Skip(1).First();
             context.UserClaims.AddRange(
                 new ShopUserClaim
                 {
@@ -2335,8 +2304,8 @@ namespace nikstra.CoreShopping.Service.Tests
 
             // Assert
             Assert.That(result.Count, Is.EqualTo(2));
-            Assert.That(result.Any(u => u.UserName == "user@domain.tld"), Is.True);
-            Assert.That(result.Any(u => u.UserName == "user2@domain.tld"), Is.True);
+            Assert.That(result.Any(u => u.UserName == user.UserName), Is.True);
+            Assert.That(result.Any(u => u.UserName == user2.UserName), Is.True);
         }
 
         [Test]
@@ -2387,13 +2356,10 @@ namespace nikstra.CoreShopping.Service.Tests
         {
             // Arrange
             var dbName = nameof(GetUsersInRoleAsync_ReturnsUsers_WhenCalled);
-            var context = GetInMemoryContext(dbName);
-            var user = new ShopUser { UserName = "user@domain.tld" };
-            context.Users.Add(user);
-            var user2 = new ShopUser { UserName = "user2@domain.tld" };
-            context.Users.Add(user2);
-            var role = new ShopRole { Name = "admin" };
-            context.Roles.Add(role);
+            var context = CreateContext<SeededUserDbContext>(dbName, true);
+            var user = context.Users.First();
+            var user2 = context.Users.Skip(1).First();
+            var role = context.Roles.First();
             context.UserRoles.AddRange(
                 new ShopUserRole { UserId = user.Id, RoleId = role.Id },
                 new ShopUserRole { UserId = user2.Id, RoleId = role.Id }
@@ -2584,11 +2550,9 @@ namespace nikstra.CoreShopping.Service.Tests
         {
             // Arrange
             var dbName = nameof(IsInRoleAsync_ReturnsTrue_WhenUserIsInRole);
-            var context = GetInMemoryContext(dbName);
-            var user = new ShopUser { UserName = "user@domain.tld" };
-            context.Users.Add(user); // TODO: Create a seed method instead of this. [Niklas, 2018-10-11]
-            var role = new ShopRole { Name = "roleName" };
-            context.Roles.Add(role);
+            var context = CreateContext<SeededUserDbContext>(dbName, true);
+            var user = context.Users.First();
+            var role = context.Roles.First();
             context.UserRoles.Add(new ShopUserRole { UserId = user.Id, RoleId = role.Id });
             context.SaveChanges();
 
@@ -2608,10 +2572,8 @@ namespace nikstra.CoreShopping.Service.Tests
         {
             // Arrange
             var dbName = nameof(IsInRoleAsync_ReturnsFalse_WhenUserIsNotInRole);
-            var context = GetInMemoryContext(dbName);
-            var user = new ShopUser { UserName = "user@domain.tld" };
-            context.Users.Add(user); // TODO: Create a seed method instead of this. [Niklas, 2018-10-11]
-            context.SaveChanges();
+            var context = CreateContext<SeededUserDbContext>(dbName, true);
+            var user = context.Users.First();
 
             // Act
             bool result;
@@ -2696,9 +2658,8 @@ namespace nikstra.CoreShopping.Service.Tests
         {
             // Arrange
             var dbName = nameof(RedeemCodeAsync_ReturnsTrue_WhenCodeIsSpent);
-            var context = GetInMemoryContext(dbName);
-            var user = new ShopUser { UserName = "user@domain.tld" };
-            context.Users.Add(user); // TODO: Create a seed method instead of this. [Niklas, 2018-10-11]
+            var context = CreateContext<SeededUserDbContext>(dbName, true);
+            var user = context.Users.First();
             context.UserTokens.Add(new ShopUserToken
             {
                 UserId = user.Id,
@@ -2718,7 +2679,7 @@ namespace nikstra.CoreShopping.Service.Tests
 
             // Assert
             Assert.That(result, Is.True);
-            using (var resultContext = GetInMemoryContext(dbName))
+            using (var resultContext = CreateContext<SeededUserDbContext>(dbName))
             {
                 Assert.That(resultContext.UserTokens.FirstOrDefault()?.Value, Does.Not.Contain("one"));
             }
@@ -2729,9 +2690,8 @@ namespace nikstra.CoreShopping.Service.Tests
         {
             // Arrange
             var dbName = nameof(RedeemCodeAsync_ReturnsFalse_WhenCodeDoesNotExist);
-            var context = GetInMemoryContext(dbName);
-            var user = new ShopUser { UserName = "user@domain.tld" };
-            context.Users.Add(user); // TODO: Create a seed method instead of this. [Niklas, 2018-10-11]
+            var context = CreateContext<SeededUserDbContext>(dbName, true);
+            var user = context.Users.First();
             context.UserTokens.Add(new ShopUserToken
             {
                 UserId = user.Id,
@@ -2824,8 +2784,8 @@ namespace nikstra.CoreShopping.Service.Tests
         {
             // Arrange
             var dbName = nameof(RedeemCodeAsync_ReturnsTrue_WhenCodeIsSpent);
-            var context = GetInMemoryContext(dbName);
-            var user = new ShopUser { UserName = "user@domain.tld" };
+            var context = CreateContext<SeededUserDbContext>(dbName, true);
+            var user = context.Users.First();
             var claims = new List<ShopUserClaim>
             {
                 new ShopUserClaim { UserId = user.Id, ClaimType = "type", ClaimValue = "value" },
@@ -2842,7 +2802,7 @@ namespace nikstra.CoreShopping.Service.Tests
             }
 
             // Assert
-            using (var resultContext = GetInMemoryContext(dbName))
+            using (var resultContext = CreateContext<SeededUserDbContext>(dbName))
             {
                 Assert.That(resultContext.UserClaims.Count(), Is.EqualTo(1));
             }
@@ -2920,11 +2880,9 @@ namespace nikstra.CoreShopping.Service.Tests
         {
             // Arrange
             var dbName = nameof(RemoveFromRoleAsync_RemovesUserFromARole_WhenCalled);
-            var context = GetInMemoryContext(dbName);
-            var user = new ShopUser { UserName = "user@domain.tld" };
-            context.Users.Add(user); // TODO: Create a seed method instead of this. [Niklas, 2018-10-11]
-            var role = new ShopRole { Name = "roleName" };
-            context.Roles.Add(role);
+            var context = CreateContext<SeededUserDbContext>(dbName, true);
+            var user = context.Users.First();
+            var role = context.Roles.First();
             context.UserRoles.Add(new ShopUserRole { UserId = user.Id, RoleId = role.Id });
             context.SaveChanges();
 
@@ -2936,7 +2894,7 @@ namespace nikstra.CoreShopping.Service.Tests
             }
 
             // Assert
-            using (var resultContext = GetInMemoryContext(dbName))
+            using (var resultContext = CreateContext<SeededUserDbContext>(dbName))
             {
                 var resultUserRole = resultContext.UserRoles.Find(new[] { user.Id, role.Id });
                 Assert.That(resultUserRole, Is.Null);
@@ -3016,9 +2974,8 @@ namespace nikstra.CoreShopping.Service.Tests
         {
             // Arrange
             var dbName = nameof(RemoveLoginAsync_RemovesLogin_WhenCalled);
-            var context = GetInMemoryContext(dbName);
-            var user = new ShopUser { UserName = "user@domain.tld" };
-            context.Users.Add(user); // TODO: Create a seed method instead of this. [Niklas, 2018-10-11]
+            var context = CreateContext<SeededUserDbContext>(dbName, true);
+            var user = context.Users.First();
             var loginInfo = new ShopUserLogin
             {
                 UserId = user.Id,
@@ -3037,7 +2994,7 @@ namespace nikstra.CoreShopping.Service.Tests
             }
 
             // Assert
-            using (var resultContext = GetInMemoryContext(dbName))
+            using (var resultContext = CreateContext<SeededUserDbContext>(dbName))
             {
                 var result = resultContext.UserLogins.Find(new[] { loginInfo.LoginProvider, loginInfo.ProviderKey });
                 Assert.That(result, Is.Null);
@@ -3140,9 +3097,8 @@ namespace nikstra.CoreShopping.Service.Tests
         {
             // Arrange
             var dbName = nameof(RemoveTokenAsync_RemovesAToken_WhenCalled);
-            var context = GetInMemoryContext(dbName);
-            var user = new ShopUser { UserName = "user@domain.tld" };
-            context.Users.Add(user); // TODO: Create a seed method instead of this. [Niklas, 2018-10-11]
+            var context = CreateContext<SeededUserDbContext>(dbName, true);
+            var user = context.Users.First();
             context.UserTokens.Add(new ShopUserToken
             {
                 UserId = user.Id,
@@ -3160,7 +3116,7 @@ namespace nikstra.CoreShopping.Service.Tests
             }
 
             // Assert
-            using (var resultContext = GetInMemoryContext(dbName))
+            using (var resultContext = CreateContext<SeededUserDbContext>(dbName))
             {
                 var result = resultContext.UserTokens.Find(new[] { "provider", "name", user.Id });
                 Assert.That(result, Is.Null);
@@ -3263,9 +3219,8 @@ namespace nikstra.CoreShopping.Service.Tests
         {
             // Arrange
             var dbName = nameof(ReplaceClaimAsync_ReplacesAClaim_WhenCalled);
-            var context = GetInMemoryContext(dbName);
-            var user = new ShopUser { UserName = "user@domain.tld" };
-            context.Users.Add(user); // TODO: Create a seed method instead of this. [Niklas, 2018-10-11]
+            var context = CreateContext<SeededUserDbContext>(dbName, true);
+            var user = context.Users.First();
             var claim = new Claim("type", "value");
             var newClaim = new Claim("type", "newValue");
             context.UserClaims.Add(new ShopUserClaim
@@ -3284,7 +3239,7 @@ namespace nikstra.CoreShopping.Service.Tests
             }
 
             // Assert
-            using (var resultContext = GetInMemoryContext(dbName))
+            using (var resultContext = CreateContext<SeededUserDbContext>(dbName))
             {
                 var resultOldClaim = resultContext.UserClaims
                     .Where(uc =>
@@ -3398,9 +3353,8 @@ namespace nikstra.CoreShopping.Service.Tests
         {
             // Arrange
             var dbName = nameof(ReplaceCodesAsync_ReplacesCodes_WhenCalled);
-            var context = GetInMemoryContext(dbName);
-            var user = new ShopUser { UserName = "user@domain.tld" };
-            context.Users.Add(user); // TODO: Create a seed method instead of this. [Niklas, 2018-10-11]
+            var context = CreateContext<SeededUserDbContext>(dbName, true);
+            var user = context.Users.First();
             context.UserTokens.Add(new ShopUserToken
             {
                 UserId = user.Id,
@@ -3419,7 +3373,7 @@ namespace nikstra.CoreShopping.Service.Tests
             }
 
             // Assert
-            using (var resultContext = GetInMemoryContext(dbName))
+            using (var resultContext = CreateContext<SeededUserDbContext>(dbName))
             {
                 var result = resultContext.UserTokens.Find(new[] { InternalLoginProvider, RecoveryCodeTokenName, user.Id });
                 Assert.That(result?.Value, Is.EqualTo(string.Join(";", newCodes)));
@@ -3493,10 +3447,8 @@ namespace nikstra.CoreShopping.Service.Tests
         {
             // Arrange
             var dbName = nameof(SetAuthenticatorKeyAsync_SetsKey_WhenCalled);
-            var context = GetInMemoryContext(dbName);
-            var user = new ShopUser { UserName = "user@domain.tld" };
-            context.Users.Add(user); // TODO: Create a seed method instead of this. [Niklas, 2018-10-11]
-            context.SaveChanges();
+            var context = CreateContext<SeededUserDbContext>(dbName, true);
+            var user = context.Users.First();
 
             // Act
             using (var repository = new UserRepository(context))
@@ -3506,10 +3458,9 @@ namespace nikstra.CoreShopping.Service.Tests
             }
 
             // Assert
-            context = GetInMemoryContext(dbName);
-            using (var repository = new UserRepository(context))
+            using (var resultContext = CreateContext<SeededUserDbContext>(dbName))
             {
-                var result = context.UserTokens.Find(new[] { InternalLoginProvider, AuthenticatorKeyName, user.Id });
+                var result = resultContext.UserTokens.Find(new[] { InternalLoginProvider, AuthenticatorKeyName, user.Id });
                 Assert.That(result?.Value, Is.EqualTo("key"));
             }
         }
@@ -4282,10 +4233,8 @@ namespace nikstra.CoreShopping.Service.Tests
         {
             // Arrange
             var dbName = nameof(SetTokenAsync_SetsToken_WhenCalled);
-            var context = GetInMemoryContext(dbName);
-            var user = new ShopUser { UserName = "user@domain.tld" };
-            context.Users.Add(user); // TODO: Create a seed method instead of this. [Niklas, 2018-10-11]
-            context.SaveChanges();
+            var context = CreateContext<SeededUserDbContext>(dbName, true);
+            var user = context.Users.First();
             var provider = "provider";
             var name = "name";
             var value = "value";
@@ -4298,7 +4247,7 @@ namespace nikstra.CoreShopping.Service.Tests
             }
 
             // Assert
-            using (var resultContext = GetInMemoryContext(dbName))
+            using (var resultContext = CreateContext<SeededUserDbContext>(dbName))
             {
                 var result = resultContext.UserTokens.Find(new[] { provider, name, user.Id });
                 Assert.That(result.Value, Is.EqualTo(value));
@@ -4555,11 +4504,9 @@ namespace nikstra.CoreShopping.Service.Tests
         {
             // Arrange
             var dbName = nameof(AddClaimsAsync_AddsClaims_WhenCalled);
-            var context = GetInMemoryContext(dbName);
-            var user = new ShopUser();
-            context.Users.Add(user);
-            context.SaveChanges();
-            var userName = "user@domain.tld";
+            var context = CreateContext<SeededUserDbContext>(dbName, true);
+            var user = context.Users.First();
+            var userName = "changed@domain.tld";
 
             // Act
             IdentityResult identityResult;
@@ -4571,7 +4518,7 @@ namespace nikstra.CoreShopping.Service.Tests
 
             // Assert
             Assert.That(identityResult, Is.EqualTo(IdentityResult.Success));
-            using (var resultContext = GetInMemoryContext(dbName))
+            using (var resultContext = CreateContext<SeededUserDbContext>(dbName))
             {
                 var result = resultContext.Users.Find(user.Id);
                 Assert.That(result.UserName, Is.EqualTo(userName));
