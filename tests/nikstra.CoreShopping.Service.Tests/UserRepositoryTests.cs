@@ -1322,7 +1322,7 @@ namespace nikstra.CoreShopping.Service.Tests
 
         #region GetLockoutEnabledAsync tests
         [Test]
-        public async Task GetLockoutEnabledAsync_ReturnsTrue_WhenEmailIsConfirmed()
+        public async Task GetLockoutEnabledAsync_ReturnsTrue_WhenLockoutIsEnabled()
         {
             // Arrange
             var context = Substitute.For<UserDbContext>();
@@ -2485,7 +2485,7 @@ namespace nikstra.CoreShopping.Service.Tests
 
         #region IncrementAccessFailedCountAsync tests
         [Test]
-        public async Task IncrementAccessFailedCountAsync_ReturnsFailedCount_WhenCalled()
+        public async Task IncrementAccessFailedCountAsync_IncrementsAndReturnsFailedCount_WhenCalled()
         {
             // Arrange
             var context = Substitute.For<UserDbContext>();
@@ -4143,7 +4143,7 @@ namespace nikstra.CoreShopping.Service.Tests
 
         #region SetSecurityStampAsync tests
         [Test]
-        public async Task SetSecurityStampAsync_SetsPhoneNumber_WhenCalled()
+        public async Task SetSecurityStampAsync_SetsSecurityStamp_WhenCalled()
         {
             // Arrange
             var context = Substitute.For<UserDbContext>();
