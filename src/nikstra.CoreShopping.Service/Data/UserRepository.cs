@@ -39,7 +39,7 @@ namespace nikstra.CoreShopping.Service.Data
 
         private UserDbContext _context;
 
-        private Task<ShopUserToken> FindTokenAsync(
+        private ValueTask<ShopUserToken> FindTokenAsync(
             ShopUser user,
             string providerName,
             string tokenName,
